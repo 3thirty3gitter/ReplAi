@@ -83,60 +83,7 @@ export function LivePreview({
   const buildingProgress = buildingSteps.length > 0 ? (currentStep / buildingSteps.length) * 100 : 0;
 
   return (
-    <div className="h-full flex flex-col bg-editor-bg">
-      {/* Header */}
-      <div className="p-4 border-b border-editor-border bg-editor-surface">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <Eye className="h-5 w-5 text-editor-primary" />
-            <h3 className="font-semibold text-editor-text">Live Preview</h3>
-            {isBuilding && (
-              <Badge variant="secondary" className="animate-pulse">
-                Building...
-              </Badge>
-            )}
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Button
-              variant={viewMode === 'desktop' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('desktop')}
-            >
-              <Monitor className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'tablet' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('tablet')}
-            >
-              <Tablet className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'mobile' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('mobile')}
-            >
-              <Smartphone className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Building Progress */}
-        {isBuilding && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-editor-text">
-                {buildingSteps[currentStep] || 'Initializing...'}
-              </span>
-              <span className="text-editor-text-dim">
-                {currentStep + 1} / {buildingSteps.length}
-              </span>
-            </div>
-            <Progress value={buildingProgress} className="h-2" />
-          </div>
-        )}
-      </div>
+    <div className="h-full flex flex-col bg-editor-bg relative">
 
       {/* Preview Area */}
       <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
