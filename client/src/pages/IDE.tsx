@@ -16,6 +16,7 @@ import { HelpCenter } from "@/components/HelpCenter";
 import { LivePreview } from "@/components/LivePreview";
 import SettingsPage from "./Settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -32,7 +33,9 @@ import {
   Send,
   Play,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FolderTree,
+  Terminal as TerminalIcon
 } from "lucide-react";
 import type { Project, File } from "@shared/schema";
 
@@ -43,10 +46,12 @@ export default function IDE() {
   const [isExplorerCollapsed, setIsExplorerCollapsed] = useState(false);
   const [isTerminalMaximized, setIsTerminalMaximized] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<Map<number, string>>(new Map());
-  const [activeTab, setActiveTab] = useState<string>('code');
+  const [activeTab, setActiveTab] = useState<string>('preview');
   const [showTemplates, setShowTemplates] = useState(false);
   const [showQuickStart, setShowQuickStart] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showFileTree, setShowFileTree] = useState(false);
+  const [showTerminal, setShowTerminal] = useState(false);
   const [aiMessages, setAIMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: number, actions?: Array<{type: 'generate-project' | 'generate-file', label: string, data: any}>}>>([]);
   const [aiInput, setAIInput] = useState('');
   const [isAppBuilding, setIsAppBuilding] = useState(false);
@@ -58,6 +63,11 @@ export default function IDE() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Get all projects
+  const { data: projects = [] } = useQuery<Project[]>({
+    queryKey: ['/api/projects']
+  });
 
   // Get current project
   const { data: project } = useQuery<Project>({
@@ -414,70 +424,107 @@ export default function IDE() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-editor-bg text-editor-text">
-      <Toolbar
-        onNewFile={handleNewFile}
-        onOpenFile={handleOpenFile}
-        onSaveFile={handleSaveFile}
-        onRunCode={handleRunCode}
-        onToggleAI={() => setIsExplorerCollapsed(!isExplorerCollapsed)}
-        isAIOpen={!isExplorerCollapsed}
-      />
+    <div className="flex h-screen bg-editor-bg text-editor-text">
+      {/* Left Side - AI Assistant (Fixed Width) */}
+      <div className="w-96 border-r border-editor-border bg-editor-surface flex flex-col">
+        {/* AI Assistant Header */}
+        <div className="h-12 bg-editor-surface border-b border-editor-border flex items-center px-4 justify-between">
+          <div className="flex items-center space-x-2">
+            <Bot className="h-5 w-5 text-editor-primary" />
+            <h2 className="text-sm font-semibold text-editor-text">AI Assistant</h2>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span className="text-xs text-editor-text-dim">Ready</span>
+          </div>
+        </div>
+        
+        {/* AI Assistant Content */}
+        <div className="flex-1">
+          <AIAssistant
+            projectId={currentProjectId}
+            isOpen={true}
+            onClose={() => {}}
+            currentCode={currentCode}
+            currentLanguage={currentLanguage}
+            onAppBuilding={handleAppBuilding}
+            onAppGenerated={handleAppGenerated}
+          />
+        </div>
+      </div>
       
-      {/* Enhanced Navigation Tabs */}
-      <div className="bg-editor-surface border-b border-editor-border">
-        <div className="flex items-center justify-between px-4 py-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-            <TabsList className="bg-transparent border-none h-auto p-0 space-x-1">
+      {/* Right Side - Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Header with Project Selector and Tools */}
+        <div className="h-12 bg-editor-surface border-b border-editor-border flex items-center px-4 justify-between">
+          <div className="flex items-center space-x-4">
+            <Select value={currentProjectId.toString()} onValueChange={(value) => setCurrentProjectId(parseInt(value))}>
+              <SelectTrigger className="w-48 h-8 bg-editor-bg border-editor-border text-editor-text">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(projects || []).map((proj) => (
+                  <SelectItem key={proj.id} value={proj.id.toString()}>
+                    {proj.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFileTree(!showFileTree)}
+              className="h-8 px-3 text-xs bg-editor-bg border-editor-border hover:bg-editor-primary hover:text-white"
+            >
+              <FolderTree className="h-3 w-3 mr-1" />
+              Files
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTerminal(!showTerminal)}
+              className="h-8 px-3 text-xs bg-editor-bg border-editor-border hover:bg-editor-primary hover:text-white"
+            >
+              <Terminal className="h-3 w-3 mr-1" />
+              Terminal
+            </Button>
+          </div>
+        </div>
 
-              <TabsTrigger 
-                value="code" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
-              >
-                <Code2 className="h-4 w-4 mr-2" />
-                Code Editor
-              </TabsTrigger>
-              <TabsTrigger 
-                value="visual" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
-              >
-                <Layout className="h-4 w-4 mr-2" />
-                Visual Builder
-              </TabsTrigger>
-              <TabsTrigger 
-                value="database" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
-              >
-                <Database className="h-4 w-4 mr-2" />
-                Database
-              </TabsTrigger>
-              <TabsTrigger 
-                value="workflows" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
-              >
-                <Zap className="h-4 w-4 mr-2" />
-                Workflows
-              </TabsTrigger>
-              <TabsTrigger 
-                value="deploy" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
-              >
-                <Rocket className="h-4 w-4 mr-2" />
-                Deploy
-              </TabsTrigger>
+        {/* Navigation Tabs */}
+        <div className="bg-editor-surface border-b border-editor-border">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+            <TabsList className="bg-transparent border-none h-auto p-0 space-x-1 justify-start">
               <TabsTrigger 
                 value="preview" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
+                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
               >
                 <Play className="h-4 w-4 mr-2" />
                 Live Preview
               </TabsTrigger>
               <TabsTrigger 
-                value="settings" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
+                value="code" 
+                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
               >
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
+                <Code2 className="h-4 w-4 mr-2" />
+                Code
+              </TabsTrigger>
+              <TabsTrigger 
+                value="database" 
+                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
+              >
+                <Database className="h-4 w-4 mr-2" />
+                Database
+              </TabsTrigger>
+              <TabsTrigger 
+                value="deploy" 
+                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
+              >
+                <Rocket className="h-4 w-4 mr-2" />
+                Deploy
               </TabsTrigger>
             </TabsList>
           </Tabs>
