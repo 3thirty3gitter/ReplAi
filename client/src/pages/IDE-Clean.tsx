@@ -181,11 +181,11 @@ export default function IDE() {
         
         {/* Resize Handle */}
         <div
-          className="absolute top-0 right-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-editor-primary hover:bg-opacity-50 transition-colors flex items-center justify-center group"
+          className="absolute top-0 right-0 w-2 h-full cursor-col-resize bg-transparent hover:bg-editor-primary hover:bg-opacity-20 transition-all flex items-center justify-center group border-r border-transparent hover:border-editor-primary"
           onMouseDown={handleMouseDown}
           ref={dragRef}
         >
-          <div className="w-1 h-8 bg-editor-border group-hover:bg-editor-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+          <GripVertical className="w-3 h-6 text-editor-border group-hover:text-editor-primary opacity-40 group-hover:opacity-80 transition-all" />
         </div>
       </div>
       

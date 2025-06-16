@@ -12,7 +12,8 @@ import {
   MessageCircle,
   Sparkles,
   AlertCircle,
-  Settings
+  Settings,
+  GripVertical
 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -256,7 +257,7 @@ export function AIAssistant({
   if (!isOpen) return null;
 
   return (
-    <div className="w-80 h-full bg-editor-surface border-r border-editor-border flex flex-col">
+    <div className="h-full bg-editor-surface flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-editor-border flex items-center justify-between bg-editor-bg">
         <div className="flex items-center space-x-2">
