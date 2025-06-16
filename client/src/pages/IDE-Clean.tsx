@@ -159,73 +159,105 @@ export default function IDE() {
       <div className="flex-1 flex flex-col">
         {/* Main Content with Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-          {/* Navigation Tabs - Full Width */}
-          <div className="bg-editor-surface border-b border-editor-border flex items-center justify-between px-4 py-2">
-            <TabsList className="bg-transparent border-none h-auto p-0 space-x-1 justify-start flex-1">
-              <TabsTrigger 
-                value="preview" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
-              >
-                <Play className="h-4 w-4 mr-2" />
-                Live Preview
-              </TabsTrigger>
-              <TabsTrigger 
-                value="code" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
-              >
-                <Code2 className="h-4 w-4 mr-2" />
-                Code
-              </TabsTrigger>
-              <TabsTrigger 
-                value="database" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
-              >
-                <Database className="h-4 w-4 mr-2" />
-                Database
-              </TabsTrigger>
-              <TabsTrigger 
-                value="deploy" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
-              >
-                <Rocket className="h-4 w-4 mr-2" />
-                Deploy
-              </TabsTrigger>
-            </TabsList>
-            
-            {/* Project Selector and Tools */}
-            <div className="flex items-center space-x-4">
-              <Select value={currentProjectId.toString()} onValueChange={(value) => setCurrentProjectId(parseInt(value))}>
-                <SelectTrigger className="w-48 h-8 bg-editor-bg border-editor-border text-editor-text">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map((proj) => (
-                    <SelectItem key={proj.id} value={proj.id.toString()}>
-                      {proj.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Navigation Tabs - Full Width with Status */}
+          <div className="bg-editor-surface border-b border-editor-border">
+            <div className="flex items-center justify-between px-4 py-2">
+              <TabsList className="bg-transparent border-none h-auto p-0 space-x-1 justify-start">
+                <TabsTrigger 
+                  value="preview" 
+                  className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Live Preview
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="code" 
+                  className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
+                >
+                  <Code2 className="h-4 w-4 mr-2" />
+                  Code
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="database" 
+                  className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
+                >
+                  <Database className="h-4 w-4 mr-2" />
+                  Database
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="deploy" 
+                  className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
+                >
+                  <Rocket className="h-4 w-4 mr-2" />
+                  Deploy
+                </TabsTrigger>
+              </TabsList>
               
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowFileTree(!showFileTree)}
-                  className="h-8 px-3 text-xs bg-editor-bg border-editor-border hover:bg-editor-primary hover:text-white"
-                >
-                  <FolderTree className="h-3 w-3 mr-1" />
-                  Files
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowTerminal(!showTerminal)}
-                  className="h-8 px-3 text-xs bg-editor-bg border-editor-border hover:bg-editor-primary hover:text-white"
-                >
-                  <TerminalIcon className="h-3 w-3 mr-1" />
-                  Terminal
-                </Button>
+              {/* Project Selector and Tools */}
+              <div className="flex items-center space-x-4">
+                <Select value={currentProjectId.toString()} onValueChange={(value) => setCurrentProjectId(parseInt(value))}>
+                  <SelectTrigger className="w-48 h-8 bg-editor-bg border-editor-border text-editor-text">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects.map((proj) => (
+                      <SelectItem key={proj.id} value={proj.id.toString()}>
+                        {proj.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowFileTree(!showFileTree)}
+                    className="h-8 px-3 text-xs bg-editor-bg border-editor-border hover:bg-editor-primary hover:text-white"
+                  >
+                    <FolderTree className="h-3 w-3 mr-1" />
+                    Files
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowTerminal(!showTerminal)}
+                    className="h-8 px-3 text-xs bg-editor-bg border-editor-border hover:bg-editor-primary hover:text-white"
+                  >
+                    <TerminalIcon className="h-3 w-3 mr-1" />
+                    Terminal
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Status Info Bar */}
+            <div className="px-4 py-1 bg-editor-bg border-t border-editor-border flex items-center justify-between text-xs">
+              <div className="flex items-center space-x-4">
+                <span className="text-editor-text-dim">
+                  Project: {project?.name || 'Loading...'}
+                </span>
+                <span className="text-editor-text-dim">
+                  Mode: {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                </span>
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-editor-text-dim">Connected</span>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                {activeTab === 'code' && activeFile && (
+                  <>
+                    <span className="text-editor-text-dim">
+                      {activeFile.language?.toUpperCase() || 'PLAINTEXT'}
+                    </span>
+                    <span className="text-editor-text-dim">{activeFile.name}</span>
+                  </>
+                )}
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-editor-primary rounded-full"></div>
+                  <span className="text-editor-primary">AI Ready</span>
+                </div>
               </div>
             </div>
           </div>
@@ -308,35 +340,7 @@ export default function IDE() {
         </div>
       )}
 
-      {/* Status Bar */}
-      <div className="h-6 bg-editor-surface border-t border-editor-border flex items-center justify-between px-4 text-xs">
-        <div className="flex items-center space-x-4">
-          <span className="text-editor-text-dim">
-            Project: {project?.name || 'Loading...'}
-          </span>
-          <span className="text-editor-text-dim">
-            Mode: {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-          </span>
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-editor-text-dim">Connected</span>
-          </div>
-        </div>
-        <div className="flex items-center space-x-4">
-          {activeTab === 'code' && activeFile && (
-            <>
-              <span className="text-editor-text-dim">
-                {activeFile.language?.toUpperCase() || 'PLAINTEXT'}
-              </span>
-              <span className="text-editor-text-dim">{activeFile.name}</span>
-            </>
-          )}
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-editor-primary rounded-full"></div>
-            <span className="text-editor-primary">AI Ready</span>
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 }
