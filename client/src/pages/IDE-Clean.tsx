@@ -196,9 +196,10 @@ export default function IDE() {
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="bg-editor-surface border-b border-editor-border">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+        {/* Main Content with Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          {/* Navigation Tabs */}
+          <div className="bg-editor-surface border-b border-editor-border">
             <TabsList className="bg-transparent border-none h-auto p-0 space-x-1 justify-start">
               <TabsTrigger 
                 value="preview" 
@@ -229,11 +230,9 @@ export default function IDE() {
                 Deploy
               </TabsTrigger>
             </TabsList>
-          </Tabs>
-        </div>
+          </div>
 
-        {/* Tab Content */}
-        <div className="flex-1 flex flex-col">
+          {/* Tab Content */}
           <TabsContent value="preview" className="flex-1 m-0">
             <LivePreview
               projectId={currentProjectId}
@@ -288,7 +287,7 @@ export default function IDE() {
           <TabsContent value="deploy" className="flex-1 m-0">
             <DeploymentCenter projectId={currentProjectId} />
           </TabsContent>
-        </div>
+        </Tabs>
       </div>
       
       {/* Terminal Panel */}
