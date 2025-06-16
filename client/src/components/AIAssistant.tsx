@@ -55,27 +55,41 @@ export function AIAssistant({
       return await response.json();
     },
     onSuccess: (data: any) => {
-      console.log('AI Response received:', data);
+      console.log('AI Response received:', JSON.stringify(data, null, 2));
+      console.log('Data type:', typeof data);
+      console.log('Data keys:', data ? Object.keys(data) : 'No keys');
       
-      let responseContent = '';
+      let responseContent = 'I received your message but had trouble generating a response.';
       
-      if (data && typeof data === 'object') {
-        if (data.message && typeof data.message === 'string' && data.message.trim()) {
-          responseContent = data.message;
-        } else if (data.suggestion && typeof data.suggestion === 'string' && data.suggestion.trim()) {
-          responseContent = data.suggestion;
-        } else if (data.content && typeof data.content === 'string' && data.content.trim()) {
-          responseContent = data.content;
+      try {
+        if (data && typeof data === 'object') {
+          console.log('Processing object response...');
+          if (data.message && typeof data.message === 'string' && data.message.trim()) {
+            console.log('Found message field');
+            responseContent = data.message;
+          } else if (data.suggestion && typeof data.suggestion === 'string' && data.suggestion.trim()) {
+            console.log('Found suggestion field');
+            responseContent = data.suggestion;
+          } else if (data.content && typeof data.content === 'string' && data.content.trim()) {
+            console.log('Found content field');
+            responseContent = data.content;
+          } else {
+            console.error('Response object missing valid content:', data);
+            console.log('Message value:', data.message);
+            console.log('Suggestion value:', data.suggestion);
+            console.log('Content value:', data.content);
+          }
+        } else if (typeof data === 'string' && data.trim()) {
+          console.log('Processing string response...');
+          responseContent = data;
         } else {
-          console.error('Response object missing valid content:', data);
-          responseContent = 'I received your message but the response format was unexpected. Please try again.';
+          console.error('Unexpected response format:', data);
         }
-      } else if (typeof data === 'string' && data.trim()) {
-        responseContent = data;
-      } else {
-        console.error('Unexpected response format:', data);
-        responseContent = 'Sorry, I encountered an issue processing your request. Please try again.';
+      } catch (error) {
+        console.error('Error processing response:', error);
       }
+      
+      console.log('Final response content:', responseContent);
       
       const aiMessage: AIMessage = {
         role: 'assistant',
