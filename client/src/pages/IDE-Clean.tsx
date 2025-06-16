@@ -157,50 +157,11 @@ export default function IDE() {
       
       {/* Right Side - Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Header with Project Selector and Tools */}
-        <div className="h-12 bg-editor-surface border-b border-editor-border flex items-center px-4 justify-between">
-          <div className="flex items-center space-x-4">
-            <Select value={currentProjectId.toString()} onValueChange={(value) => setCurrentProjectId(parseInt(value))}>
-              <SelectTrigger className="w-48 h-8 bg-editor-bg border-editor-border text-editor-text">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map((proj) => (
-                  <SelectItem key={proj.id} value={proj.id.toString()}>
-                    {proj.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFileTree(!showFileTree)}
-              className="h-8 px-3 text-xs bg-editor-bg border-editor-border hover:bg-editor-primary hover:text-white"
-            >
-              <FolderTree className="h-3 w-3 mr-1" />
-              Files
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowTerminal(!showTerminal)}
-              className="h-8 px-3 text-xs bg-editor-bg border-editor-border hover:bg-editor-primary hover:text-white"
-            >
-              <TerminalIcon className="h-3 w-3 mr-1" />
-              Terminal
-            </Button>
-          </div>
-        </div>
-
         {/* Main Content with Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-          {/* Navigation Tabs */}
-          <div className="bg-editor-surface border-b border-editor-border">
-            <TabsList className="bg-transparent border-none h-auto p-0 space-x-1 justify-start">
+          {/* Navigation Tabs - Full Width */}
+          <div className="bg-editor-surface border-b border-editor-border flex items-center justify-between px-4 py-2">
+            <TabsList className="bg-transparent border-none h-auto p-0 space-x-1 justify-start flex-1">
               <TabsTrigger 
                 value="preview" 
                 className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
@@ -230,6 +191,43 @@ export default function IDE() {
                 Deploy
               </TabsTrigger>
             </TabsList>
+            
+            {/* Project Selector and Tools */}
+            <div className="flex items-center space-x-4">
+              <Select value={currentProjectId.toString()} onValueChange={(value) => setCurrentProjectId(parseInt(value))}>
+                <SelectTrigger className="w-48 h-8 bg-editor-bg border-editor-border text-editor-text">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((proj) => (
+                    <SelectItem key={proj.id} value={proj.id.toString()}>
+                      {proj.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowFileTree(!showFileTree)}
+                  className="h-8 px-3 text-xs bg-editor-bg border-editor-border hover:bg-editor-primary hover:text-white"
+                >
+                  <FolderTree className="h-3 w-3 mr-1" />
+                  Files
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowTerminal(!showTerminal)}
+                  className="h-8 px-3 text-xs bg-editor-bg border-editor-border hover:bg-editor-primary hover:text-white"
+                >
+                  <TerminalIcon className="h-3 w-3 mr-1" />
+                  Terminal
+                </Button>
+              </div>
+            </div>
           </div>
 
           {/* Tab Content */}
