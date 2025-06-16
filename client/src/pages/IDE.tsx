@@ -23,7 +23,8 @@ import {
   FileText,
   Palette,
   Settings,
-  HelpCircle
+  HelpCircle,
+  Bot
 } from "lucide-react";
 import type { Project, File } from "@shared/schema";
 
@@ -251,6 +252,13 @@ export default function IDE() {
                 Code Editor
               </TabsTrigger>
               <TabsTrigger 
+                value="ai" 
+                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
+              >
+                <Bot className="h-4 w-4 mr-2" />
+                AI Assistant
+              </TabsTrigger>
+              <TabsTrigger 
                 value="visual" 
                 className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
               >
@@ -336,6 +344,19 @@ export default function IDE() {
                 projectId={currentProjectId}
                 isMaximized={isTerminalMaximized}
                 onToggleMaximize={() => setIsTerminalMaximized(!isTerminalMaximized)}
+              />
+            </div>
+          </TabsContent>
+          
+          {/* AI Assistant Tab */}
+          <TabsContent value="ai" className="flex flex-1 m-0">
+            <div className="flex-1 flex">
+              <AIAssistant
+                projectId={currentProjectId}
+                isOpen={true}
+                onClose={() => setActiveTab('code')}
+                currentCode={currentCode}
+                currentLanguage={currentLanguage}
               />
             </div>
           </TabsContent>
