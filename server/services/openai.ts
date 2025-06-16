@@ -146,7 +146,8 @@ ${code}
 
 Find potential issues and provide fixes.`;
 
-    const response = await openai.chat.completions.create({
+    const client = getOpenAIClient();
+    const response = await client.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {

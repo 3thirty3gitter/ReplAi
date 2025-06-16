@@ -9,7 +9,7 @@ import {
   insertCodeExecutionSchema,
   type AIMessage 
 } from "@shared/schema";
-import { getCodeAssistance, generateCode, explainCode, debugCode } from "./services/openai";
+import { getCodeAssistance, generateCode, explainCode, debugCode, resetOpenAIClient } from "./services/openai";
 import { executeCode } from "./services/codeExecution";
 import { z } from "zod";
 
@@ -316,6 +316,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update the environment variable
       process.env.OPENAI_API_KEY = openaiApiKey;
+      
+      // Reset the OpenAI client to use the new API key
+      resetOpenAIClient();
       
       res.json({ success: true, message: 'API key updated successfully' });
     } catch (error) {
