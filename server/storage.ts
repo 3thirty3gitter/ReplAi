@@ -273,6 +273,7 @@ Happy coding!`,
     const newConversation: AIConversation = {
       ...conversation,
       id,
+      messages: conversation.messages || [],
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -305,6 +306,8 @@ Happy coding!`,
     const newExecution: CodeExecution = {
       ...execution,
       id,
+      output: execution.output || null,
+      error: execution.error || null,
       createdAt: new Date()
     };
     this.codeExecutions.set(id, newExecution);
