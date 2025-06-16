@@ -203,6 +203,18 @@ export default function IDE() {
   const currentCode = activeFile ? (pendingChanges.get(activeFile.id) || activeFile.content) : '';
   const currentLanguage = activeFile?.language || 'javascript';
 
+  const handleAppBuilding = (isBuilding: boolean, steps: string[], currentStep: number) => {
+    setIsAppBuilding(isBuilding);
+    setBuildingSteps(steps);
+    setCurrentBuildStep(currentStep);
+  };
+
+  const handleAppGenerated = (files: Array<{name: string, content: string, language: string, path: string}>) => {
+    setGeneratedAppFiles(files);
+    // Switch to preview tab to show the generated app
+    setActiveTab('preview');
+  };
+
   // AI Chat handler
   const handleAISubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -452,6 +464,13 @@ export default function IDE() {
               >
                 <Rocket className="h-4 w-4 mr-2" />
                 Deploy
+              </TabsTrigger>
+              <TabsTrigger 
+                value="preview" 
+                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Live Preview
               </TabsTrigger>
               <TabsTrigger 
                 value="settings" 
@@ -711,6 +730,35 @@ export default function IDE() {
             <DeploymentCenter projectId={currentProjectId} />
           </TabsContent>
           
+          {/* Live Preview Tab - Split Screen with AI and App Preview */}
+          <TabsContent value="preview" className="flex flex-1 m-0">
+            <div className="flex w-full h-full">
+              {/* Left Side - AI Assistant */}
+              <div className="w-96 border-r border-editor-border bg-editor-surface">
+                <AIAssistant
+                  projectId={currentProjectId}
+                  isOpen={true}
+                  onClose={() => {}}
+                  currentCode={currentCode}
+                  currentLanguage={currentLanguage}
+                  onAppBuilding={handleAppBuilding}
+                  onAppGenerated={handleAppGenerated}
+                />
+              </div>
+              
+              {/* Right Side - Live App Preview */}
+              <div className="flex-1">
+                <LivePreview
+                  projectId={currentProjectId}
+                  isBuilding={isAppBuilding}
+                  buildingSteps={buildingSteps}
+                  currentStep={currentBuildStep}
+                  generatedFiles={generatedAppFiles}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
           {/* Settings Tab */}
           <TabsContent value="settings" className="flex flex-1 m-0">
             <SettingsPage />

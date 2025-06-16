@@ -92,15 +92,16 @@ export function AIAssistant({
             includeTests: false
           });
 
+          const data = await response.json();
           setIsGenerating(false);
           onAppBuilding?.(false, [], 0);
           
-          if (response.files) {
-            onAppGenerated?.(response.files);
+          if (data.files) {
+            onAppGenerated?.(data.files);
           }
 
           return {
-            message: `🎉 Your app is ready! I've built a fully functional ${response.files?.length || 0}-file application based on your request. Check out the live preview to see it in action.`,
+            message: `🎉 Your app is ready! I've built a fully functional ${data.files?.length || 0}-file application based on your request. Check out the live preview to see it in action.`,
             isAppGenerated: true
           };
         } catch (error) {
