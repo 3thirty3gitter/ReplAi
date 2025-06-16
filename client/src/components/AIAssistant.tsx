@@ -104,6 +104,11 @@ export function AIAssistant({
       }, 100);
     },
     onError: (error: any) => {
+      console.error('AI request error:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error message:', error.message);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      
       let errorMessage = 'Failed to get AI response';
       
       if (error.message?.includes('PERPLEXITY_API_KEY')) {
@@ -113,6 +118,14 @@ export function AIAssistant({
       } else if (error.message) {
         errorMessage = error.message;
       }
+
+      const aiMessage: AIMessage = {
+        role: 'assistant',
+        content: errorMessage,
+        timestamp: Date.now()
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
 
       toast({
         title: "AI Assistant Error",
