@@ -46,47 +46,46 @@ export function AIAssistant({
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
-      const response = await apiRequest('POST', '/api/ai/chat', {
-        message,
-        code: currentCode,
-        language: currentLanguage,
-        projectId
-      });
-      return await response.json();
+      console.log('Sending AI request:', { message, code: currentCode, language: currentLanguage, projectId });
+      
+      try {
+        const response = await apiRequest('POST', '/api/ai/chat', {
+          message,
+          code: currentCode,
+          language: currentLanguage,
+          projectId
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers));
+        
+        const data = await response.json();
+        console.log('Parsed response data:', data);
+        return data;
+      } catch (error) {
+        console.error('Error in mutation function:', error);
+        throw error;
+      }
     },
     onSuccess: (data: any) => {
       console.log('AI Response received:', JSON.stringify(data, null, 2));
       console.log('Data type:', typeof data);
       console.log('Data keys:', data ? Object.keys(data) : 'No keys');
       
-      let responseContent = 'I received your message but had trouble generating a response.';
+      let responseContent = '';
       
       try {
-        if (data && typeof data === 'object') {
-          console.log('Processing object response...');
-          if (data.message && typeof data.message === 'string' && data.message.trim()) {
-            console.log('Found message field');
-            responseContent = data.message;
-          } else if (data.suggestion && typeof data.suggestion === 'string' && data.suggestion.trim()) {
-            console.log('Found suggestion field');
-            responseContent = data.suggestion;
-          } else if (data.content && typeof data.content === 'string' && data.content.trim()) {
-            console.log('Found content field');
-            responseContent = data.content;
-          } else {
-            console.error('Response object missing valid content:', data);
-            console.log('Message value:', data.message);
-            console.log('Suggestion value:', data.suggestion);
-            console.log('Content value:', data.content);
-          }
-        } else if (typeof data === 'string' && data.trim()) {
-          console.log('Processing string response...');
-          responseContent = data;
+        // Direct check for message field first - this is what the backend returns
+        if (data && data.message) {
+          responseContent = data.message;
+          console.log('Successfully extracted message:', responseContent.substring(0, 100) + '...');
         } else {
-          console.error('Unexpected response format:', data);
+          console.error('No message field found in response:', data);
+          responseContent = 'I received your message but the response format was unexpected. Please try again.';
         }
       } catch (error) {
         console.error('Error processing response:', error);
+        responseContent = 'Sorry, I encountered an issue processing your request. Please try again.';
       }
       
       console.log('Final response content:', responseContent);
