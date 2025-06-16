@@ -904,7 +904,7 @@ function App() {
                 </svg>
                 {cart.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                    {cart.reduce((sum, cartItem) => sum + cartItem.quantity, 0)}
                   </span>
                 )}
               </button>
@@ -1065,7 +1065,7 @@ function App() {
                 <div className="border-t p-6">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-lg font-bold">Total:</span>
-                    <span className="text-xl font-bold">${getTotalPrice().toLocaleString()}</span>
+                    <span className="text-xl font-bold">\${getTotalPrice().toLocaleString()}</span>
                   </div>
                   <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
                     Checkout

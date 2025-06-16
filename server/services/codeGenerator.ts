@@ -1729,7 +1729,7 @@ async function generateFullStackApplication(prompt: string, appType: Application
     case 'social-platform':
       return generateSocialPlatform(prompt, projectId);
     case 'ecommerce':
-      return generateEcommercePlatform(prompt, projectId);
+      return generateSocialPlatform(prompt, projectId);
     case 'dashboard':
       return generateDashboardApp(prompt, projectId);
     case 'content-management':
