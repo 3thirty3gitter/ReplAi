@@ -880,7 +880,7 @@ function App() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              ${storeName}
+              \${storeName}
             </h1>
             <div className="flex items-center space-x-6">
               <div className="relative">
