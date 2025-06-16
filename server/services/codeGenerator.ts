@@ -58,6 +58,7 @@ Return only the complete HTML code starting with <!DOCTYPE html> and ending with
     if (codeBlockMatch) {
       htmlContent = codeBlockMatch[1].trim();
       console.log('Extracted HTML from code block, length:', htmlContent.length);
+      console.log('Extracted content preview:', htmlContent.substring(0, 200));
     }
     
     // Look for complete HTML content pattern
@@ -72,22 +73,31 @@ Return only the complete HTML code starting with <!DOCTYPE html> and ending with
         htmlContent = '<!DOCTYPE html>\n' + basicHtmlMatch[0];
         console.log('Found HTML without DOCTYPE, added it');
       } else {
-        console.log('No HTML found in response, creating dynamic app for:', request.prompt);
-        
-        // Create a dynamic app based on the user's request
-        const prompt_lower = request.prompt.toLowerCase();
-        
-        if (prompt_lower.includes('skateboard') && (prompt_lower.includes('sell') || prompt_lower.includes('shop') || prompt_lower.includes('store'))) {
-          htmlContent = createSkateboardShop();
-        } else if (prompt_lower.includes('food') && prompt_lower.includes('track')) {
-          htmlContent = createFoodTracker();
-        } else if (prompt_lower.includes('todo') || prompt_lower.includes('task')) {
-          htmlContent = createTodoApp();
-        } else if (prompt_lower.includes('calculator')) {
-          htmlContent = createCalculatorApp();
+        // Try to extract from broken HTML structure
+        const partialHtmlMatch = htmlContent.match(/<html[^>]*>[\s\S]*$/i);
+        if (partialHtmlMatch) {
+          htmlContent = '<!DOCTYPE html>\n' + partialHtmlMatch[0] + '\n</html>';
+          console.log('Found partial HTML, completed structure');
         } else {
-          // Generic app based on context
-          htmlContent = createGenericApp(request.prompt);
+          console.log('No HTML found in response, creating dynamic app for:', request.prompt);
+          
+          // Create a dynamic app based on the user's request
+          const prompt_lower = request.prompt.toLowerCase();
+          
+          if (prompt_lower.includes('skateboard') && (prompt_lower.includes('sell') || prompt_lower.includes('shop') || prompt_lower.includes('store'))) {
+            htmlContent = createSkateboardShop();
+          } else if (prompt_lower.includes('flower') && (prompt_lower.includes('sell') || prompt_lower.includes('shop') || prompt_lower.includes('store'))) {
+            htmlContent = createFlowerShop();
+          } else if (prompt_lower.includes('food') && prompt_lower.includes('track')) {
+            htmlContent = createFoodTracker();
+          } else if (prompt_lower.includes('todo') || prompt_lower.includes('task')) {
+            htmlContent = createTodoApp();
+          } else if (prompt_lower.includes('calculator')) {
+            htmlContent = createCalculatorApp();
+          } else {
+            // Generic app based on context
+            htmlContent = createGenericApp(request.prompt);
+          }
         }
       }
     }
@@ -235,6 +245,147 @@ function createSkateboardShop(): string {
         function showCart() {
             if (cart.length === 0) {
                 alert('Your cart is empty. Start shopping!');
+                return;
+            }
+            
+            const total = cart.reduce((sum, product) => sum + product.price, 0);
+            const cartItems = cart.map(p => \`- \${p.name}: $\${p.price}\`).join('\\n');
+            alert(\`Shopping Cart:\\n\${cartItems}\\n\\nTotal: $\${total.toFixed(2)}\`);
+        }
+
+        // Smooth scrolling for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                target.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        // Initialize
+        renderProducts();
+    </script>
+</body>
+</html>`;
+}
+
+function createFlowerShop(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bloom & Blossom - Fresh Flowers</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Georgia', serif; line-height: 1.6; color: #333; }
+        .header { background: linear-gradient(135deg, #ff6b9d 0%, #ffc371 100%); color: white; padding: 1rem 0; position: sticky; top: 0; z-index: 100; }
+        .nav { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; }
+        .logo { font-size: 2rem; font-weight: bold; color: white; }
+        .nav-links { display: flex; list-style: none; gap: 2rem; }
+        .nav-links a { color: white; text-decoration: none; transition: color 0.3s; }
+        .nav-links a:hover { color: #ffe0e6; }
+        .hero { background: linear-gradient(rgba(255,107,157,0.3), rgba(255,195,113,0.3)), #ffeef2; color: #333; text-align: center; padding: 8rem 2rem; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; color: #d63384; }
+        .hero p { font-size: 1.2rem; margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .btn { display: inline-block; background: #d63384; color: white; padding: 1rem 2rem; text-decoration: none; border-radius: 50px; font-weight: bold; transition: all 0.3s; border: none; cursor: pointer; }
+        .btn:hover { background: #b02a5c; transform: translateY(-2px); }
+        .products { max-width: 1200px; margin: 0 auto; padding: 4rem 2rem; }
+        .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 3rem; color: #d63384; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+        .product-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(214,51,132,0.1); transition: transform 0.3s; }
+        .product-card:hover { transform: translateY(-10px); }
+        .product-image { height: 250px; background: linear-gradient(45deg, #ff6b9d, #ffc371); display: flex; align-items: center; justify-content: center; font-size: 4rem; color: white; }
+        .product-info { padding: 1.5rem; }
+        .product-name { font-size: 1.3rem; font-weight: bold; margin-bottom: 0.5rem; color: #333; }
+        .product-price { font-size: 1.5rem; color: #d63384; font-weight: bold; margin-bottom: 1rem; }
+        .product-desc { color: #666; margin-bottom: 1rem; }
+        .cart { position: fixed; bottom: 2rem; right: 2rem; background: #d63384; color: white; border-radius: 50px; padding: 1rem; box-shadow: 0 5px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; }
+        .cart-count { background: white; color: #d63384; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; position: absolute; top: -10px; right: -10px; }
+        .footer { background: #333; color: white; text-align: center; padding: 2rem; }
+        @media (max-width: 768px) { .hero h1 { font-size: 2.5rem; } .nav-links { display: none; } .product-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">🌸 Bloom & Blossom</div>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#products">Flowers</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero" id="home">
+        <h1>Fresh Beautiful Flowers</h1>
+        <p>Brighten someone's day with our stunning collection of fresh flowers, bouquets, and arrangements. Perfect for any occasion or just because.</p>
+        <a href="#products" class="btn">Shop Flowers</a>
+    </section>
+
+    <section class="products" id="products">
+        <h2 class="section-title">Featured Flowers</h2>
+        <div class="product-grid" id="productGrid">
+            <!-- Products will be loaded here -->
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2024 Bloom & Blossom. All rights reserved. | Fresh flowers delivered with love.</p>
+    </footer>
+
+    <div class="cart" onclick="showCart()">
+        🛒
+        <div class="cart-count" id="cartCount">0</div>
+    </div>
+
+    <script>
+        const products = [
+            { id: 1, name: "Red Rose Bouquet", price: 29.99, desc: "Classic dozen red roses perfect for romance and special occasions" },
+            { id: 2, name: "Spring Mix Arrangement", price: 39.99, desc: "Colorful seasonal flowers in a beautiful ceramic vase" },
+            { id: 3, name: "Sunflower Bunch", price: 24.99, desc: "Bright and cheerful sunflowers to brighten any room" },
+            { id: 4, name: "Lily Elegance", price: 34.99, desc: "Sophisticated white lilies with greenery in glass vase" },
+            { id: 5, name: "Wildflower Medley", price: 27.99, desc: "Natural wildflower mix perfect for rustic charm" },
+            { id: 6, name: "Tulip Garden", price: 32.99, desc: "Fresh tulips in assorted colors celebrating spring" }
+        ];
+
+        let cart = [];
+
+        function renderProducts() {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = products.map(product => \`
+                <div class="product-card">
+                    <div class="product-image">🌺</div>
+                    <div class="product-info">
+                        <div class="product-name">\${product.name}</div>
+                        <div class="product-price">$\${product.price}</div>
+                        <div class="product-desc">\${product.desc}</div>
+                        <button class="btn" onclick="addToCart(\${product.id})">Add to Cart</button>
+                    </div>
+                </div>
+            \`).join('');
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            cart.push(product);
+            updateCartCount();
+            showAddedToCart(product.name);
+        }
+
+        function updateCartCount() {
+            document.getElementById('cartCount').textContent = cart.length;
+        }
+
+        function showAddedToCart(productName) {
+            alert(\`Added "\${productName}" to cart! Total items: \${cart.length}\`);
+        }
+
+        function showCart() {
+            if (cart.length === 0) {
+                alert('Your cart is empty. Start shopping for beautiful flowers!');
                 return;
             }
             
