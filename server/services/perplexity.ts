@@ -11,12 +11,15 @@ export interface CodeAssistanceResponse {
   confidence: number;
 }
 
-if (!process.env.PERPLEXITY_API_KEY) {
-  throw new Error("PERPLEXITY_API_KEY environment variable is required");
+function checkApiKey() {
+  if (!process.env.PERPLEXITY_API_KEY) {
+    throw new Error("PERPLEXITY_API_KEY environment variable is required");
+  }
 }
 
 export async function getCodeAssistance(request: CodeAssistanceRequest): Promise<CodeAssistanceResponse> {
   try {
+    checkApiKey();
     const systemPrompt = `You are an expert programming assistant. Help users with:
 - Code optimization and improvements
 - Bug fixes and debugging
@@ -86,6 +89,7 @@ Please provide a helpful response with code suggestions and explanations.`;
 
 export async function generateCode(prompt: string, language: string = 'javascript'): Promise<string> {
   try {
+    checkApiKey();
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -124,6 +128,7 @@ export async function generateCode(prompt: string, language: string = 'javascrip
 
 export async function explainCode(code: string, language: string): Promise<string> {
   try {
+    checkApiKey();
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -162,6 +167,7 @@ export async function explainCode(code: string, language: string): Promise<strin
 
 export async function debugCode(code: string, language: string, error?: string): Promise<CodeAssistanceResponse> {
   try {
+    checkApiKey();
     const prompt = `Debug this ${language} code${error ? ` that's producing this error: ${error}` : ''}:
 
 \`\`\`${language}
