@@ -71,38 +71,9 @@ export function Terminal({ projectId, isMaximized, onToggleMaximize }: TerminalP
 
   // Initialize WebSocket connection
   useEffect(() => {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    
-    wsRef.current = new WebSocket(wsUrl);
-
-    wsRef.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      if (data.type === 'execution_result') {
-        const result: ExecutionResult = data.result;
-        setIsExecuting(false);
-        
-        if (result.output) {
-          addTerminalLine('output', result.output);
-          setOutputs(prev => [...prev, result.output]);
-        }
-        
-        if (result.error) {
-          addTerminalLine('error', result.error);
-          setProblems(prev => [...prev, result.error]);
-        }
-
-        if (result.status === 'completed' && !result.error) {
-          addTerminalLine('success', `✓ Executed successfully in ${result.executionTime}ms`);
-        }
-      }
-    };
-
+    // Skip WebSocket connection for now - use direct API calls instead
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      // Cleanup function
     };
   }, []);
 

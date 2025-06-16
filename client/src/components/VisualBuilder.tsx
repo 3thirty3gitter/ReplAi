@@ -43,7 +43,7 @@ interface ComponentConfig {
   id: string;
   type: string;
   name: string;
-  icon: React.ComponentType;
+  icon: React.ComponentType<{ className?: string }>;
   defaultProps: Record<string, any>;
   category: string;
   description: string;
@@ -214,7 +214,7 @@ function ComponentLibraryItem({ component }: { component: ComponentConfig }) {
       }`}
     >
       <div className="flex items-center space-x-2">
-        <IconComponent className="h-4 w-4 text-editor-primary" />
+        <IconComponent {...({ className: "h-4 w-4 text-editor-primary" } as any)} />
         <div className="flex-1">
           <p className="text-sm font-medium text-editor-text">{component.name}</p>
           <p className="text-xs text-editor-text-dim">{component.description}</p>
