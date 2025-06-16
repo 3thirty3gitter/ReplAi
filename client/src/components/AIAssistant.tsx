@@ -54,11 +54,22 @@ export function AIAssistant({
       });
     },
     onSuccess: (data: any) => {
+      console.log('AI Response received:', data);
+      
       let responseContent = '';
       
-      if (data && typeof data === 'object' && data.message) {
-        responseContent = data.message;
-      } else if (typeof data === 'string') {
+      if (data && typeof data === 'object') {
+        if (data.message && typeof data.message === 'string' && data.message.trim()) {
+          responseContent = data.message;
+        } else if (data.suggestion && typeof data.suggestion === 'string' && data.suggestion.trim()) {
+          responseContent = data.suggestion;
+        } else if (data.content && typeof data.content === 'string' && data.content.trim()) {
+          responseContent = data.content;
+        } else {
+          console.error('Response object missing valid content:', data);
+          responseContent = 'I received your message but the response format was unexpected. Please try again.';
+        }
+      } else if (typeof data === 'string' && data.trim()) {
         responseContent = data;
       } else {
         console.error('Unexpected response format:', data);
