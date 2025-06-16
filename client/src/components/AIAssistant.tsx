@@ -24,6 +24,8 @@ interface AIAssistantProps {
   onClose: () => void;
   currentCode?: string;
   currentLanguage?: string;
+  onAppBuilding?: (isBuilding: boolean, steps: string[], currentStep: number) => void;
+  onAppGenerated?: (files: Array<{name: string, content: string, language: string, path: string}>) => void;
 }
 
 interface AIMessage {
@@ -37,34 +39,91 @@ export function AIAssistant({
   isOpen, 
   onClose,
   currentCode,
-  currentLanguage 
+  currentLanguage,
+  onAppBuilding,
+  onAppGenerated
 }: AIAssistantProps) {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const buildingSteps = [
+    "Analyzing your request...",
+    "Designing the app structure...", 
+    "Creating HTML foundation...",
+    "Adding CSS styling...",
+    "Implementing JavaScript functionality...",
+    "Adding interactive features...",
+    "Optimizing performance...",
+    "Final touches and testing..."
+  ];
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
       console.log('Sending AI request:', { message, code: currentCode, language: currentLanguage, projectId });
       
-      try {
-        const response = await apiRequest('POST', '/api/ai/chat', {
-          message,
-          code: currentCode,
-          language: currentLanguage,
-          projectId
-        });
-        
-        console.log('Response status:', response.status);
-        console.log('Response headers:', Object.fromEntries(response.headers));
-        
-        const data = await response.json();
-        console.log('Parsed response data:', data);
-        return data;
-      } catch (error) {
-        console.error('Error in mutation function:', error);
-        throw error;
+      // Check if this is an app building request
+      const isAppRequest = message.toLowerCase().includes('build') || 
+                          message.toLowerCase().includes('create') || 
+                          message.toLowerCase().includes('make') ||
+                          message.toLowerCase().includes('app') ||
+                          message.toLowerCase().includes('website') ||
+                          message.toLowerCase().includes('page');
+
+      if (isAppRequest) {
+        setIsGenerating(true);
+        onAppBuilding?.(true, buildingSteps, 0);
+
+        // Simulate building progress with visual feedback
+        for (let i = 0; i < buildingSteps.length; i++) {
+          await new Promise(resolve => setTimeout(resolve, 800));
+          onAppBuilding?.(true, buildingSteps, i);
+        }
+
+        try {
+          // Generate the actual app
+          const response = await apiRequest('POST', '/api/ai/generate-project', {
+            prompt: message,
+            projectId,
+            projectType: 'web',
+            framework: 'vanilla',
+            includeTests: false
+          });
+
+          setIsGenerating(false);
+          onAppBuilding?.(false, [], 0);
+          
+          if (response.files) {
+            onAppGenerated?.(response.files);
+          }
+
+          return {
+            message: `🎉 Your app is ready! I've built a fully functional ${response.files?.length || 0}-file application based on your request. Check out the live preview to see it in action.`,
+            isAppGenerated: true
+          };
+        } catch (error) {
+          setIsGenerating(false);
+          onAppBuilding?.(false, [], 0);
+          throw error;
+        }
+      } else {
+        // Regular chat response
+        try {
+          const response = await apiRequest('POST', '/api/ai/chat', {
+            message,
+            code: currentCode,
+            language: currentLanguage,
+            projectId
+          });
+          
+          const data = await response.json();
+          return data;
+        } catch (error) {
+          console.error('Error in mutation function:', error);
+          throw error;
+        }
       }
     },
     onSuccess: (data: any) => {

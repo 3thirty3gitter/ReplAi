@@ -13,6 +13,7 @@ import { DeploymentCenter } from "@/components/DeploymentCenter";
 import { ProjectTemplates } from "@/components/ProjectTemplates";
 import { QuickStartTemplates } from "@/components/QuickStartTemplates";
 import { HelpCenter } from "@/components/HelpCenter";
+import { LivePreview } from "@/components/LivePreview";
 import SettingsPage from "./Settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,10 @@ export default function IDE() {
   const [showHelp, setShowHelp] = useState(false);
   const [aiMessages, setAIMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: number, actions?: Array<{type: 'generate-project' | 'generate-file', label: string, data: any}>}>>([]);
   const [aiInput, setAIInput] = useState('');
+  const [isAppBuilding, setIsAppBuilding] = useState(false);
+  const [buildingSteps, setBuildingSteps] = useState<string[]>([]);
+  const [currentBuildStep, setCurrentBuildStep] = useState(0);
+  const [generatedAppFiles, setGeneratedAppFiles] = useState<Array<{name: string, content: string, language: string, path: string}>>([]);
   const [isAILoading, setIsAILoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   
