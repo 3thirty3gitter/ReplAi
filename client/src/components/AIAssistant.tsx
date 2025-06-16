@@ -136,7 +136,13 @@ export function AIAssistant({
   });
 
   const handleSend = () => {
-    if (!input.trim() || chatMutation.isPending) return;
+    console.log('handleSend called with input:', input);
+    console.log('Mutation pending:', chatMutation.isPending);
+    
+    if (!input.trim() || chatMutation.isPending) {
+      console.log('Early return from handleSend');
+      return;
+    }
 
     const userMessage: AIMessage = {
       role: 'user',
@@ -144,7 +150,10 @@ export function AIAssistant({
       timestamp: Date.now()
     };
     
+    console.log('Adding user message:', userMessage);
     setMessages(prev => [...prev, userMessage]);
+    
+    console.log('Triggering mutation with:', input.trim());
     chatMutation.mutate(input.trim());
     setInput('');
   };
