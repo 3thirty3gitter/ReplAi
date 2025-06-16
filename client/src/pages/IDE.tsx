@@ -11,6 +11,7 @@ import { DatabaseBuilder } from "@/components/DatabaseBuilder";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
 import { DeploymentCenter } from "@/components/DeploymentCenter";
 import { ProjectTemplates } from "@/components/ProjectTemplates";
+import SettingsPage from "./Settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -332,6 +333,13 @@ export default function IDE() {
                 <Rocket className="h-4 w-4 mr-2" />
                 Deploy
               </TabsTrigger>
+              <TabsTrigger 
+                value="settings" 
+                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </TabsTrigger>
             </TabsList>
           </Tabs>
           
@@ -502,6 +510,11 @@ export default function IDE() {
           {/* Deployment Center Tab */}
           <TabsContent value="deploy" className="flex flex-1 m-0">
             <DeploymentCenter projectId={currentProjectId} />
+          </TabsContent>
+          
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="flex flex-1 m-0">
+            <SettingsPage />
           </TabsContent>
         </Tabs>
       </div>

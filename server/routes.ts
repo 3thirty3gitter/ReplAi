@@ -303,6 +303,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/settings', async (req, res) => {
+    try {
+      const { openaiApiKey } = z.object({
+        openaiApiKey: z.string().min(1)
+      }).parse(req.body);
+
+      // Validate the API key format
+      if (!openaiApiKey.startsWith('sk-')) {
+        return res.status(400).json({ error: 'Invalid OpenAI API key format' });
+      }
+
+      // Update the environment variable
+      process.env.OPENAI_API_KEY = openaiApiKey;
+      
+      res.json({ success: true, message: 'API key updated successfully' });
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  });
+
   // Code Execution API
   app.get('/api/projects/:projectId/executions', async (req, res) => {
     try {
