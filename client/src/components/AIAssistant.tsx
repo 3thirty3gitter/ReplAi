@@ -96,8 +96,27 @@ export function AIAssistant({
           setIsGenerating(false);
           onAppBuilding?.(false, [], 0);
           
-          if (data.files) {
-            onAppGenerated?.(data.files);
+          if (data.success && data.filesCreated > 0) {
+            // Fetch the actual file contents for preview
+            try {
+              const filesResponse = await apiRequest('GET', `/api/projects/${projectId}/files`);
+              const allFiles = await filesResponse.json();
+              
+              // Get the newly created files (assuming they're the most recent ones)
+              const recentFiles = allFiles.slice(-data.filesCreated);
+              
+              // Format files for the preview component
+              const previewFiles = recentFiles.map((file: any) => ({
+                name: file.name,
+                content: file.content,
+                language: file.language,
+                path: file.path
+              }));
+              
+              onAppGenerated?.(previewFiles);
+            } catch (fileError) {
+              console.error('Error fetching generated files:', fileError);
+            }
           }
 
           return {
