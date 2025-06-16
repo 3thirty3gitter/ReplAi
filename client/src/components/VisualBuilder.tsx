@@ -816,7 +816,8 @@ function PropertyPanel({ component, onUpdate }: {
   );
 }
 
-export function VisualBuilder({ projectId }: VisualBuilderProps) {
+// Internal canvas component that uses DnD hooks
+function VisualBuilderCanvas({ projectId }: VisualBuilderProps) {
   const [droppedComponents, setDroppedComponents] = useState<DroppedComponent[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState('Basic');
@@ -865,8 +866,7 @@ export function VisualBuilder({ projectId }: VisualBuilderProps) {
   const filteredComponents = componentLibrary.filter(comp => comp.category === activeCategory);
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="h-full flex">
+    <div className="h-full flex">
         {/* Component Library */}
         <div className="w-80 border-r border-editor-border bg-editor-surface flex flex-col">
           <div className="p-4 border-b border-editor-border">
@@ -953,6 +953,14 @@ export function VisualBuilder({ projectId }: VisualBuilderProps) {
           </ScrollArea>
         </div>
       </div>
+    );
+}
+
+// Main export component with DndProvider wrapper
+export function VisualBuilder({ projectId }: VisualBuilderProps) {
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <VisualBuilderCanvas projectId={projectId} />
     </DndProvider>
   );
 }

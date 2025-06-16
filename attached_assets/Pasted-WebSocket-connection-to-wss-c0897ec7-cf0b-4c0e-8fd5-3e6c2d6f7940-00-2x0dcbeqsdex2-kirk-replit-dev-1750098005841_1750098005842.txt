@@ -1,0 +1,56 @@
+WebSocket connection to 'wss://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/?token=c6A0ht9uhDYm' failed: 
+t @ Network.js:227
+Network.js:227  Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=c6A0ht9uhDYm' is invalid.
+    at new t (Network.js:227:18)
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+2index.ts:37  Uncaught Invariant Violation: Expected drag drop context
+    at invariant (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-dnd.js?v=88108493:268:15)
+    at useDragDropManager (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-dnd.js?v=88108493:2183:3)
+    at useDropTargetMonitor (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-dnd.js?v=88108493:2393:19)
+    at useDrop (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-dnd.js?v=88108493:2487:19)
+    at VisualBuilder (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/src/components/VisualBuilder.tsx:1718:30)
+    at renderWithHooks (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js?v=88108493:11548:26)
+    at mountIndeterminateComponent (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js?v=88108493:14926:21)
+    at beginWork (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js?v=88108493:15914:22)
+    at HTMLUnknownElement.callCallback2 (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js?v=88108493:3674:22)
+    at Object.invokeGuardedCallbackDev (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js?v=88108493:3699:24)
+Console.js:61  The above error occurred in the <VisualBuilder> component:
+
+    at VisualBuilder (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/src/components/VisualBuilder.tsx:1713:33)
+    at div
+    at div
+    at https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5SOOSTSW.js?v=88108493:42:13
+    at Presence (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-35JT3HWS.js?v=88108493:24:11)
+    at https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=88108493:387:13
+    at _c5 (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/src/components/ui/tabs.tsx:72:12)
+    at div
+    at https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5SOOSTSW.js?v=88108493:42:13
+    at Provider (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=88108493:38:15)
+    at https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=88108493:265:7
+    at div
+    at div
+    at IDE (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/src/pages/IDE.tsx:53:51)
+    at Route (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=88108493:323:16)
+    at Switch (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=88108493:379:17)
+    at Router
+    at Provider (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=88108493:38:15)
+    at TooltipProvider (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=88108493:63:5)
+    at QueryClientProvider (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=88108493:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+Mt.forEach.n.<computed> @ Console.js:61
+react-dom.development.js:12056  Uncaught Invariant Violation: Expected drag drop context
+    at invariant (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-dnd.js?v=88108493:268:15)
+    at useDragDropManager (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-dnd.js?v=88108493:2183:3)
+    at useDropTargetMonitor (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-dnd.js?v=88108493:2393:19)
+    at useDrop (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-dnd.js?v=88108493:2487:19)
+    at VisualBuilder (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/src/components/VisualBuilder.tsx:1718:30)
+    at renderWithHooks (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js?v=88108493:11548:26)
+    at mountIndeterminateComponent (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js?v=88108493:14926:21)
+    at beginWork (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js?v=88108493:15914:22)
+    at beginWork$1 (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js?v=88108493:19753:22)
+    at performUnitOfWork (https://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js?v=88108493:19198:20)
