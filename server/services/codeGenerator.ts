@@ -74,6 +74,8 @@ Generate the complete HTML file with all styling and functionality embedded.`;
       context: systemPrompt
     });
 
+    console.log('Raw AI response:', response.suggestion.substring(0, 500));
+
     // Parse the AI response to extract the JSON
     let generationResult;
     try {
@@ -83,21 +85,66 @@ Generate the complete HTML file with all styling and functionality embedded.`;
       // If direct parsing fails, try to extract JSON from markdown code blocks
       const jsonMatch = response.suggestion.match(/```json\s*([\s\S]*?)\s*```/);
       if (jsonMatch) {
-        generationResult = JSON.parse(jsonMatch[1]);
-      } else {
-        // Fallback: create a basic structure from the response
-        generationResult = {
-          files: [{
-            name: 'generated-code.js',
-            path: '/src/generated-code.js',
-            content: response.suggestion,
-            language: 'javascript',
-            description: 'Generated code based on user request'
-          }],
-          instructions: 'Generated code has been created. Review and integrate as needed.',
-          nextSteps: ['Review the generated code', 'Test functionality', 'Customize as needed'],
-          dependencies: []
-        };
+        try {
+          generationResult = JSON.parse(jsonMatch[1]);
+        } catch (jsonParseError) {
+          console.error('Failed to parse extracted JSON:', jsonParseError);
+          generationResult = null;
+        }
+      }
+      
+      // If still no valid JSON, try to extract HTML content directly
+      if (!generationResult) {
+        // Look for HTML content patterns in the response
+        const htmlMatch = response.suggestion.match(/<!DOCTYPE html[\s\S]*?<\/html>/i);
+        if (htmlMatch) {
+          generationResult = {
+            files: [{
+              name: 'index.html',
+              path: '/index.html',
+              content: htmlMatch[0],
+              language: 'html',
+              description: 'Generated HTML application'
+            }],
+            instructions: 'HTML application generated successfully',
+            nextSteps: ['Review the application', 'Test functionality'],
+            dependencies: []
+          };
+        } else {
+          // Final fallback: create a simple HTML structure
+          const simpleHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated App</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Application Generated</h1>
+        <p>Your request: ${request.prompt}</p>
+        <p>The AI generated content but it wasn't in the expected format. Please try again with a more specific request.</p>
+    </div>
+</body>
+</html>`;
+          
+          generationResult = {
+            files: [{
+              name: 'index.html',
+              path: '/index.html',
+              content: simpleHtml,
+              language: 'html',
+              description: 'Fallback HTML application'
+            }],
+            instructions: 'Generated a basic HTML structure. Please try again for better results.',
+            nextSteps: ['Try a more specific request', 'Review the output'],
+            dependencies: []
+          };
+        }
       }
     }
 
