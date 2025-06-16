@@ -144,83 +144,53 @@ export function CodeEditor({
   };
 
   return (
-    <div className="flex-1 flex flex-col">
-      {/* Editor Tabs */}
-      <div className="bg-editor-surface border-b border-editor-border flex items-center overflow-x-auto">
-        {openFiles.map(file => (
-          <div
-            key={file.id}
-            className={`flex items-center px-4 py-2 border-r border-editor-border text-sm cursor-pointer hover:bg-editor-bg ${
-              activeFileId === file.id ? 'bg-editor-bg' : ''
-            }`}
-            onClick={() => onFileSelect(file.id)}
-          >
-            {getFileIcon(file)}
-            <span className="ml-2">{file.name}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-2 h-4 w-4 p-0 hover:text-editor-error"
-              onClick={(e) => {
-                e.stopPropagation();
-                onFileClose(file.id);
-              }}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
-        ))}
-      </div>
-
-      {/* Monaco Editor Container */}
-      <div className="flex-1 relative">
-        <div ref={editorRef} className="w-full h-full" />
-        
-        {/* AI Suggestions Overlay */}
-        {showSuggestions && aiSuggestions.length > 0 && (
-          <Card className="absolute top-4 right-4 w-80 bg-editor-surface border-editor-border shadow-lg">
-            <CardContent className="p-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <Lightbulb className="h-4 w-4 text-editor-primary" />
-                  <span className="text-sm font-medium">AI Suggestions</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 text-editor-text-dim hover:text-editor-text"
-                  onClick={() => setShowSuggestions(false)}
+    <div className="flex-1 relative">
+      <div ref={editorRef} className="w-full h-full" />
+      
+      {/* AI Suggestions Overlay */}
+      {showSuggestions && aiSuggestions.length > 0 && (
+        <Card className="absolute top-4 right-4 w-80 bg-editor-surface border-editor-border shadow-lg">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <Lightbulb className="h-4 w-4 text-editor-primary" />
+                <span className="text-sm font-medium">AI Suggestions</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0 text-editor-text-dim hover:text-editor-text"
+                onClick={() => setShowSuggestions(false)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+            <div className="text-xs text-editor-text-dim mb-2">
+              Based on your code context:
+            </div>
+            <div className="space-y-2">
+              {aiSuggestions.map(suggestion => (
+                <div
+                  key={suggestion.id}
+                  className="p-2 bg-editor-bg rounded text-sm cursor-pointer hover:bg-opacity-80 transition-colors"
+                  onClick={() => {
+                    // Handle suggestion click
+                    setShowSuggestions(false);
+                  }}
                 >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-              <div className="text-xs text-editor-text-dim mb-2">
-                Based on your code context:
-              </div>
-              <div className="space-y-2">
-                {aiSuggestions.map(suggestion => (
-                  <div
-                    key={suggestion.id}
-                    className="p-2 bg-editor-bg rounded text-sm cursor-pointer hover:bg-opacity-80 transition-colors"
-                    onClick={() => {
-                      // Handle suggestion click
-                      setShowSuggestions(false);
-                    }}
-                  >
-                    <div className="font-medium">{suggestion.title}</div>
-                    <div className="text-xs text-editor-text-dim mt-1">
-                      {suggestion.description}
-                    </div>
-                    <div className="text-xs text-editor-primary mt-1">
-                      Confidence: {Math.round(suggestion.confidence * 100)}%
-                    </div>
+                  <div className="font-medium">{suggestion.title}</div>
+                  <div className="text-xs text-editor-text-dim mt-1">
+                    {suggestion.description}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                  <div className="text-xs text-editor-primary mt-1">
+                    Confidence: {Math.round(suggestion.confidence * 100)}%
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
