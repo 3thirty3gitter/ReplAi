@@ -205,14 +205,13 @@ export default function IDE() {
     setIsAILoading(true);
 
     try {
-      const response = await apiRequest('POST', '/api/ai/chat', {
+      const data = await apiRequest('POST', '/api/ai/chat', {
         message: aiInput,
         code: currentCode,
         language: currentLanguage,
         projectId: currentProjectId
       });
 
-      const data = await response.json();
       const aiResponse = {
         role: 'assistant' as const,
         content: data.message || 'I received your message but had trouble generating a response.',
