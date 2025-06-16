@@ -686,7 +686,9 @@ export default function IDE() {
           
           {/* Visual Builder Tab */}
           <TabsContent value="visual" className="flex flex-1 m-0">
-            <VisualBuilder projectId={currentProjectId} />
+            <div className="w-full h-full">
+              <VisualBuilder projectId={currentProjectId} />
+            </div>
           </TabsContent>
           
           {/* Database Builder Tab */}

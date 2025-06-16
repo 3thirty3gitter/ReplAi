@@ -14,7 +14,19 @@ import {
   Music,
   GamepadIcon,
   Zap,
-  Sparkles
+  Sparkles,
+  BarChart3,
+  FileText,
+  Building2,
+  Briefcase,
+  Heart,
+  Users,
+  Newspaper,
+  Smartphone,
+  Code2,
+  Database,
+  Shield,
+  Cloud
 } from 'lucide-react';
 
 interface Template {
