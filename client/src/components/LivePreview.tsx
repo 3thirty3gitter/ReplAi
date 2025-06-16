@@ -42,7 +42,7 @@ export function LivePreview({
 
   // Generate live preview content from files
   useEffect(() => {
-    if (generatedFiles.length > 0) {
+    if (generatedFiles && Array.isArray(generatedFiles) && generatedFiles.length > 0) {
       console.log('Generated files for preview:', generatedFiles);
       
       // Look for HTML content in any file
