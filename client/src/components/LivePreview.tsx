@@ -43,31 +43,47 @@ export function LivePreview({
   // Generate live preview content from files
   useEffect(() => {
     if (generatedFiles.length > 0) {
-      const htmlFile = generatedFiles.find(f => f.language === 'html' || f.name.endsWith('.html'));
+      console.log('Generated files for preview:', generatedFiles);
+      
+      // Look for HTML content in any file
+      let htmlFile = generatedFiles.find(f => f.language === 'html' || f.name.endsWith('.html'));
+      
+      // If no HTML file, check if any file contains HTML content (common for single-file apps)
+      if (!htmlFile) {
+        htmlFile = generatedFiles.find(f => 
+          f.content.includes('<!DOCTYPE html') || 
+          f.content.includes('<html') ||
+          f.content.includes('<body')
+        );
+      }
+      
       const cssFile = generatedFiles.find(f => f.language === 'css' || f.name.endsWith('.css'));
-      const jsFile = generatedFiles.find(f => f.language === 'javascript' || f.name.endsWith('.js'));
+      const jsFile = generatedFiles.find(f => (f.language === 'javascript' || f.name.endsWith('.js')) && f !== htmlFile);
 
       if (htmlFile) {
         let content = htmlFile.content;
         
-        // Inject CSS if available
-        if (cssFile) {
+        // Inject CSS if available and not already included
+        if (cssFile && !content.includes(cssFile.content)) {
           content = content.replace(
             '</head>', 
             `<style>${cssFile.content}</style></head>`
           );
         }
         
-        // Inject JavaScript if available
-        if (jsFile) {
+        // Inject JavaScript if available and not already included
+        if (jsFile && !content.includes(jsFile.content)) {
           content = content.replace(
             '</body>', 
             `<script>${jsFile.content}</script></body>`
           );
         }
         
+        console.log('Setting preview content:', content.substring(0, 200) + '...');
         setPreviewContent(content);
         setIsPreviewReady(true);
+      } else {
+        console.log('No HTML content found in generated files');
       }
     }
   }, [generatedFiles]);
