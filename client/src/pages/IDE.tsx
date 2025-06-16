@@ -193,7 +193,14 @@ export default function IDE() {
   // AI Chat handler
   const handleAISubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!aiInput.trim() || isAILoading) return;
+    console.log('=== AI SUBMIT TRIGGERED ===');
+    console.log('Input value:', aiInput);
+    console.log('Is loading:', isAILoading);
+    
+    if (!aiInput.trim() || isAILoading) {
+      console.log('Early return - empty input or loading');
+      return;
+    }
 
     const userMessage = {
       role: 'user' as const,
