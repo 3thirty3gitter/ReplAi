@@ -26,67 +26,45 @@ export interface CodeGenerationResponse {
 }
 
 export async function generateProjectFiles(request: CodeGenerationRequest): Promise<CodeGenerationResponse> {
-  const systemPrompt = `You are an expert full-stack developer and architect. Generate complete, production-ready code based on user requirements.
+  const systemPrompt = `You are an expert web developer. Generate complete, functional web applications as single HTML files with embedded CSS and JavaScript.
 
-IMPORTANT: Always respond with valid JSON in this exact format:
+CRITICAL: You must respond with valid JSON in this EXACT format:
 {
   "files": [
     {
-      "name": "filename.ext",
-      "path": "/src/components/filename.ext",
-      "content": "complete file content here",
-      "language": "javascript|typescript|html|css|json",
-      "description": "brief description of the file's purpose"
+      "name": "index.html",
+      "path": "/index.html",
+      "content": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Page Title</title>\n    <style>\n        /* CSS goes here */\n    </style>\n</head>\n<body>\n    <!-- HTML content goes here -->\n    <script>\n        // JavaScript goes here\n    </script>\n</body>\n</html>",
+      "language": "html",
+      "description": "Complete single-file web application"
     }
   ],
-  "instructions": "clear setup and usage instructions",
-  "nextSteps": ["step 1", "step 2", "step 3"],
-  "dependencies": ["package1", "package2"]
+  "instructions": "Open the HTML file in a browser to view the application",
+  "nextSteps": ["Review the application", "Test functionality", "Customize as needed"],
+  "dependencies": []
 }
 
+CRITICAL REQUIREMENTS:
+- Create ONE complete HTML file only 
+- Embed ALL CSS inside <style> tags in the <head>
+- Embed ALL JavaScript inside <script> tags before </body>
+- NO external file references or imports
+- NO placeholder content - use real, specific content
+- Modern, professional design with animations and interactivity
+- Fully responsive mobile-first design
+- Complete functionality with no missing pieces`;
+
+  const userPrompt = `Create a single HTML file for: ${request.prompt}
+
 Requirements:
-- Generate complete, functional code (no placeholders, TODOs, or comments like "// Add your logic here")
-- Include proper error handling, validation, and edge cases
-- Add beautiful, responsive CSS styling with modern design
-- Use semantic HTML and accessibility best practices
-- Include realistic sample data where appropriate
-- Ensure all components are fully interactive and functional
-- Add proper TypeScript types if using TypeScript
-- Include proper state management and data flow
-- Add loading states, error states, and empty states where relevant
-- Use modern JavaScript/React patterns and best practices
-- Include TypeScript types when applicable
-- Follow modern best practices
-- Create modular, reusable components
-- Add proper file structure and organization
+- One complete HTML file with embedded CSS and JavaScript
+- Beautiful, modern design with responsive layout
+- Fully functional interactive elements
+- Professional styling and user experience
+- Real content (no lorem ipsum or placeholders)
+- Mobile-friendly design
 
-For web apps, include:
-- HTML structure with semantic elements
-- CSS with mobile-first responsive design
-- JavaScript with modern ES6+ features
-- Proper error handling and user feedback
-
-For React components:
-- Functional components with hooks
-- TypeScript interfaces
-- Proper prop validation
-- Responsive design with Tailwind CSS
-- Error boundaries where needed
-
-For APIs:
-- RESTful endpoints with proper HTTP methods
-- Input validation and sanitization
-- Error handling middleware
-- TypeScript types for requests/responses
-- Database schema if needed`;
-
-  const userPrompt = `Project Type: ${request.projectType || 'web'}
-Framework: ${request.framework || 'react'}
-Include Tests: ${request.includeTests || false}
-
-User Request: ${request.prompt}
-
-Generate a complete, production-ready implementation. Include all necessary files, styling, and functionality.`;
+Generate the complete HTML file with all styling and functionality embedded.`;
 
   try {
     const response = await getCodeAssistance({
