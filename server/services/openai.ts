@@ -1,9 +1,27 @@
 import OpenAI from "openai";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key" 
-});
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OpenAI API key is not configured. Please add your API key in Settings.");
+  }
+  
+  // Create new client if none exists or API key changed
+  if (!openaiClient) {
+    openaiClient = new OpenAI({ 
+      apiKey: process.env.OPENAI_API_KEY
+    });
+  }
+  
+  return openaiClient;
+}
+
+// Reset client when API key changes
+export function resetOpenAIClient() {
+  openaiClient = null;
+}
 
 export interface CodeAssistanceRequest {
   code: string;
@@ -41,7 +59,8 @@ ${request.context ? `Additional Context: ${request.context}` : ''}
 
 Please provide a helpful response with code suggestions and explanations.`;
 
-    const response = await openai.chat.completions.create({
+    const client = getOpenAIClient();
+    const response = await client.chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: systemPrompt },
@@ -67,7 +86,8 @@ Please provide a helpful response with code suggestions and explanations.`;
 
 export async function generateCode(prompt: string, language: string = 'javascript'): Promise<string> {
   try {
-    const response = await openai.chat.completions.create({
+    const client = getOpenAIClient();
+    const response = await client.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
@@ -92,7 +112,8 @@ export async function generateCode(prompt: string, language: string = 'javascrip
 
 export async function explainCode(code: string, language: string): Promise<string> {
   try {
-    const response = await openai.chat.completions.create({
+    const client = getOpenAIClient();
+    const response = await client.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
