@@ -39,9 +39,10 @@ export default function IDE() {
   const [pendingChanges, setPendingChanges] = useState<Map<number, string>>(new Map());
   const [activeTab, setActiveTab] = useState<string>('code');
   const [showTemplates, setShowTemplates] = useState(false);
-  const [aiMessages, setAIMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: number}>>([]);
+  const [aiMessages, setAIMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: number, actions?: Array<{type: 'generate-project' | 'generate-file', label: string, data: any}>}>>([]);
   const [aiInput, setAIInput] = useState('');
   const [isAILoading, setIsAILoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -193,14 +194,7 @@ export default function IDE() {
   // AI Chat handler
   const handleAISubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('=== AI SUBMIT TRIGGERED ===');
-    console.log('Input value:', aiInput);
-    console.log('Is loading:', isAILoading);
-    
-    if (!aiInput.trim() || isAILoading) {
-      console.log('Early return - empty input or loading');
-      return;
-    }
+    if (!aiInput.trim() || isAILoading) return;
 
     const userMessage = {
       role: 'user' as const,
@@ -213,8 +207,6 @@ export default function IDE() {
     setIsAILoading(true);
 
     try {
-      console.log('AI Tab: Sending request with:', { message: aiInput, code: currentCode, language: currentLanguage, projectId: currentProjectId });
-      
       const response = await apiRequest('POST', '/api/ai/chat', {
         message: aiInput,
         code: currentCode,
@@ -222,17 +214,13 @@ export default function IDE() {
         projectId: currentProjectId
       });
 
-      console.log('AI Tab: Response status:', response.status);
       const data = await response.json();
-      console.log('AI Tab: Parsed data:', data);
 
       const aiResponse = {
         role: 'assistant' as const,
         content: data.message || 'I received your message but had trouble generating a response.',
         timestamp: Date.now()
       };
-
-      console.log('AI Tab: Final AI response:', aiResponse);
       setAIMessages(prev => [...prev, aiResponse]);
     } catch (error) {
       const errorMessage = {

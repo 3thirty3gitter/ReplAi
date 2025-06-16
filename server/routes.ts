@@ -11,6 +11,7 @@ import {
 } from "@shared/schema";
 import { getCodeAssistance, generateCode, explainCode, debugCode } from "./services/perplexity";
 import { executeCode } from "./services/codeExecution";
+import { generateProjectFiles, createGeneratedFiles, generateSingleFile } from "./services/codeGenerator";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -298,6 +299,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const response = await getCodeAssistance(request);
       res.json({ message: response.suggestion });
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  });
+
+  // AI Code Generation - Generate complete project files
+  app.post('/api/ai/generate-project', async (req, res) => {
+    try {
+      const { prompt, projectId, projectType, framework, includeTests } = z.object({
+        prompt: z.string().min(1),
+        projectId: z.number(),
+        projectType: z.enum(['web', 'api', 'component', 'full-stack']).optional(),
+        framework: z.enum(['react', 'vanilla', 'express', 'next']).optional(),
+        includeTests: z.boolean().optional()
+      }).parse(req.body);
+
+      const result = await generateProjectFiles({
+        prompt,
+        projectId,
+        projectType,
+        framework,
+        includeTests
+      });
+
+      // Actually create the files in the project
+      await createGeneratedFiles(projectId, result.files);
+
+      res.json({
+        success: true,
+        filesCreated: result.files.length,
+        files: result.files.map(f => ({ name: f.name, path: f.path, description: f.description })),
+        instructions: result.instructions,
+        nextSteps: result.nextSteps,
+        dependencies: result.dependencies
+      });
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  });
+
+  // AI Code Generation - Generate single file
+  app.post('/api/ai/generate-file', async (req, res) => {
+    try {
+      const { prompt, projectId, targetPath, language } = z.object({
+        prompt: z.string().min(1),
+        projectId: z.number(),
+        targetPath: z.string().optional(),
+        language: z.string().optional()
+      }).parse(req.body);
+
+      const file = await generateSingleFile(projectId, prompt, targetPath, language);
+
+      // Create the file in the project
+      await storage.createFile({
+        projectId,
+        name: file.name,
+        path: file.path,
+        content: file.content,
+        language: file.language,
+        isDirectory: false
+      });
+
+      res.json({
+        success: true,
+        file: {
+          name: file.name,
+          path: file.path,
+          description: file.description,
+          language: file.language
+        }
+      });
     } catch (error) {
       res.status(400).json({ error: (error as Error).message });
     }
