@@ -1,15 +1,16 @@
-# CodeIDE - No-Code Development Platform
+# AI-Powered No-Code IDE
 
-A comprehensive web-based IDE that enables users with no coding experience to build full-stack applications using visual tools and AI assistance.
+A revolutionary platform that enables anyone to build complete, production-ready applications without coding knowledge. Powered by advanced AI and intuitive visual tools, this IDE democratizes software development for creators, entrepreneurs, and businesses.
 
 ## 🚀 Features
 
-### AI Assistant
-- **Perplexity Integration**: Powered by Perplexity API for intelligent code assistance
-- **Natural Language Interface**: Ask questions in plain English
-- **Code Explanations**: Get detailed explanations of any code
-- **Debugging Help**: AI-powered error detection and solutions
-- **Best Practices**: Guidance on coding standards and optimization
+### 🤖 AI Assistant - Your Coding Partner
+- **Complete Project Generation**: Builds entire applications from natural language descriptions
+- **Smart Code Creation**: Generates HTML, CSS, JavaScript with proper structure and styling
+- **Interactive Templates**: 10+ pre-built app templates (todo apps, calculators, portfolios, games)
+- **Action Buttons**: One-click generation for complete projects or individual files
+- **Real-time Assistance**: Explains code, suggests improvements, debugs errors
+- **Natural Language Interface**: Simply describe what you want to build
 
 ### Visual Page Builder
 - **Drag-and-Drop Interface**: 14+ component types including:
@@ -84,14 +85,33 @@ Six production-ready templates:
 - **ESBuild** for fast compilation
 - **PostCSS** for CSS processing
 
-## 🎯 Target Users
+## 🎯 What You Can Build
 
-- **Entrepreneurs** building MVPs without technical teams
-- **Small Business Owners** creating web presence
-- **Content Creators** building personal brands
-- **Students** learning web development concepts
-- **Designers** prototyping interactive experiences
-- **Non-technical Teams** creating internal tools
+### Complete Applications (5-20 minutes each)
+- **Todo Applications**: Task management with drag-and-drop, categories, due dates
+- **Calculators**: Scientific calculators with history and keyboard support
+- **Weather Dashboards**: Current weather, forecasts, maps, location search
+- **Portfolio Websites**: Professional portfolios with project galleries and contact forms
+- **E-commerce Stores**: Online stores with cart, checkout, and product management
+- **Chat Applications**: Real-time messaging with rooms and file sharing
+- **Event Calendars**: Interactive calendars with scheduling and reminders
+- **Photo Galleries**: Image galleries with upload, filters, and slideshow
+- **Music Players**: Audio players with playlists and visualizers
+- **Simple Games**: Interactive games with score tracking and levels
+
+### Business Tools
+- **CRM Systems**: Customer relationship management
+- **Project Managers**: Task tracking and team collaboration
+- **Data Dashboards**: Analytics and reporting tools
+- **Booking Systems**: Appointment scheduling and management
+- **Inventory Systems**: Stock tracking and management
+
+### Target Users
+- **Entrepreneurs** validating business ideas quickly
+- **Small Businesses** creating custom tools without hiring developers
+- **Content Creators** building interactive experiences
+- **Students** learning programming concepts visually
+- **Anyone** with an app idea but no coding knowledge
 
 ## 🔧 Setup Requirements
 
