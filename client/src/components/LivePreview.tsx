@@ -51,9 +51,11 @@ export function LivePreview({
       // If no HTML file, check if any file contains HTML content (common for single-file apps)
       if (!htmlFile) {
         htmlFile = generatedFiles.find(f => 
-          f.content.includes('<!DOCTYPE html') || 
-          f.content.includes('<html') ||
-          f.content.includes('<body')
+          f && f.content && (
+            f.content.includes('<!DOCTYPE html') || 
+            f.content.includes('<html') ||
+            f.content.includes('<body')
+          )
         );
       }
       

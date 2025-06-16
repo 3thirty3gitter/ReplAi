@@ -223,10 +223,10 @@ export default function IDE() {
             <TabsContent value="preview" className="flex-1 m-0">
               <LivePreview
                 projectId={currentProjectId}
-                isAppBuilding={isAppBuilding}
+                isBuilding={isAppBuilding}
                 buildingSteps={buildingSteps}
-                currentBuildStep={currentBuildStep}
-                generatedAppFiles={generatedAppFiles}
+                currentStep={currentBuildStep}
+                generatedFiles={generatedAppFiles}
               />
             </TabsContent>
 
