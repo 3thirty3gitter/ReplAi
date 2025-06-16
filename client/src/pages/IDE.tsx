@@ -206,12 +206,18 @@ export default function IDE() {
     setIsAILoading(true);
 
     try {
-      const data = await apiRequest('POST', '/api/ai/chat', {
+      console.log('AI Tab: Sending request with:', { message: aiInput, code: currentCode, language: currentLanguage, projectId: currentProjectId });
+      
+      const response = await apiRequest('POST', '/api/ai/chat', {
         message: aiInput,
         code: currentCode,
         language: currentLanguage,
         projectId: currentProjectId
       });
+
+      console.log('AI Tab: Response status:', response.status);
+      const data = await response.json();
+      console.log('AI Tab: Parsed data:', data);
 
       const aiResponse = {
         role: 'assistant' as const,
@@ -219,6 +225,7 @@ export default function IDE() {
         timestamp: Date.now()
       };
 
+      console.log('AI Tab: Final AI response:', aiResponse);
       setAIMessages(prev => [...prev, aiResponse]);
     } catch (error) {
       const errorMessage = {
