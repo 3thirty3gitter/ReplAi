@@ -9,7 +9,7 @@ import {
   insertCodeExecutionSchema,
   type AIMessage 
 } from "@shared/schema";
-import { getCodeAssistance, generateCode, explainCode, debugCode, resetOpenAIClient } from "./services/openai";
+import { getCodeAssistance, generateCode, explainCode, debugCode } from "./services/perplexity";
 import { executeCode } from "./services/codeExecution";
 import { z } from "zod";
 
@@ -305,22 +305,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/settings', async (req, res) => {
     try {
-      const { openaiApiKey } = z.object({
-        openaiApiKey: z.string().min(1)
+      const { perplexityApiKey } = z.object({
+        perplexityApiKey: z.string().min(1)
       }).parse(req.body);
 
       // Validate the API key format
-      if (!openaiApiKey.startsWith('sk-')) {
-        return res.status(400).json({ error: 'Invalid OpenAI API key format' });
+      if (!perplexityApiKey.startsWith('pplx-')) {
+        return res.status(400).json({ error: 'Invalid Perplexity API key format' });
       }
 
       // Update the environment variable
-      process.env.OPENAI_API_KEY = openaiApiKey;
+      process.env.PERPLEXITY_API_KEY = perplexityApiKey;
       
-      // Reset the OpenAI client to use the new API key
-      resetOpenAIClient();
-      
-      res.json({ success: true, message: 'API key updated successfully' });
+      res.json({ success: true, message: 'Perplexity API key updated successfully' });
     } catch (error) {
       res.status(400).json({ error: (error as Error).message });
     }

@@ -9,20 +9,20 @@ import { apiRequest } from "@/lib/queryClient";
 import { Settings as SettingsIcon, Key, Save, Eye, EyeOff } from "lucide-react";
 
 export default function Settings() {
-  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [perplexityApiKey, setPerplexityApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const { toast } = useToast();
 
   const saveSettingsMutation = useMutation({
-    mutationFn: async (settings: { openaiApiKey: string }) => {
+    mutationFn: async (settings: { perplexityApiKey: string }) => {
       return await apiRequest('POST', '/api/settings', settings);
     },
     onSuccess: () => {
       toast({
         title: "Settings saved",
-        description: "Your API key has been updated successfully."
+        description: "Your Perplexity API key has been updated successfully."
       });
-      setOpenaiApiKey(''); // Clear the input for security
+      setPerplexityApiKey(''); // Clear the input for security
     },
     onError: (error) => {
       toast({
@@ -34,25 +34,25 @@ export default function Settings() {
   });
 
   const handleSave = () => {
-    if (!openaiApiKey.trim()) {
+    if (!perplexityApiKey.trim()) {
       toast({
         title: "API Key required",
-        description: "Please enter your OpenAI API key",
+        description: "Please enter your Perplexity API key",
         variant: "destructive"
       });
       return;
     }
 
-    if (!openaiApiKey.startsWith('sk-')) {
+    if (!perplexityApiKey.startsWith('pplx-')) {
       toast({
         title: "Invalid API Key",
-        description: "OpenAI API keys should start with 'sk-'",
+        description: "Perplexity API keys should start with 'pplx-'",
         variant: "destructive"
       });
       return;
     }
 
-    saveSettingsMutation.mutate({ openaiApiKey });
+    saveSettingsMutation.mutate({ perplexityApiKey });
   };
 
   return (
@@ -80,17 +80,17 @@ export default function Settings() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <Label htmlFor="openai-key" className="text-editor-text text-base font-medium">
-                  OpenAI API Key
+                <Label htmlFor="perplexity-key" className="text-editor-text text-base font-medium">
+                  Perplexity API Key
                 </Label>
                 <div className="flex space-x-4">
                   <div className="relative flex-1">
                     <Input
-                      id="openai-key"
+                      id="perplexity-key"
                       type={showApiKey ? "text" : "password"}
-                      value={openaiApiKey}
-                      onChange={(e) => setOpenaiApiKey(e.target.value)}
-                      placeholder="sk-..."
+                      value={perplexityApiKey}
+                      onChange={(e) => setPerplexityApiKey(e.target.value)}
+                      placeholder="pplx-..."
                       className="bg-editor-bg border-editor-border text-editor-text pr-12 h-12 text-base"
                     />
                     <Button
@@ -115,12 +115,12 @@ export default function Settings() {
                 <p className="text-sm text-editor-text-dim">
                   Get your API key from{' '}
                   <a 
-                    href="https://platform.openai.com/api-keys" 
+                    href="https://www.perplexity.ai/settings/api" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-editor-primary hover:underline font-medium"
                   >
-                    OpenAI Platform
+                    Perplexity Settings
                   </a>
                 </p>
               </div>
