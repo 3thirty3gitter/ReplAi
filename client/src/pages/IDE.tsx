@@ -529,162 +529,158 @@ export default function IDE() {
                 </div>
               )}
               
-              {/* Main Code Editor Area */}
-              <div className="flex-1 flex flex-col min-w-0">
-                <div className="flex flex-1 overflow-hidden">
-                  <div className="flex-1 min-w-0">
-                    <CodeEditor
-                      openFiles={openFiles}
-                      activeFileId={activeFileId}
-                      onFileChange={handleFileChange}
-                      onFileClose={handleFileClose}
-                      onFileSelect={setActiveFileId}
-                    />
+              {/* Code Editor with AI Assistant */}
+              <div className="flex flex-1 overflow-hidden">
+                <CodeEditor
+                  openFiles={openFiles}
+                  activeFileId={activeFileId}
+                  onFileChange={handleFileChange}
+                  onFileClose={handleFileClose}
+                  onFileSelect={setActiveFileId}
+                />
+                
+                {/* Permanent AI Assistant Panel */}
+                <div className="w-80 border-l border-editor-border bg-editor-surface flex flex-col">
+                  <div className="p-3 border-b border-editor-border">
+                    <h3 className="text-sm font-medium text-editor-text flex items-center">
+                      <Bot className="h-4 w-4 mr-2 text-editor-primary" />
+                      AI Assistant
+                    </h3>
+                    <p className="text-xs text-editor-text-dim">Build anything with AI</p>
                   </div>
                   
-                  {/* Permanent AI Assistant Panel */}
-                  <div className="w-80 border-l border-editor-border bg-editor-surface flex flex-col">
-                    <div className="p-3 border-b border-editor-border">
-                      <h3 className="text-sm font-medium text-editor-text flex items-center">
-                        <Bot className="h-4 w-4 mr-2 text-editor-primary" />
-                        AI Assistant
-                      </h3>
-                      <p className="text-xs text-editor-text-dim">Build anything with AI</p>
+                  <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                    <div className="flex-1 overflow-y-auto p-3" id="chat-messages">
+                      <div className="space-y-3">
+                        {aiMessages.length === 0 ? (
+                          <div className="text-center">
+                            <Bot className="h-10 w-10 mx-auto mb-3 text-editor-primary" />
+                            <p className="text-xs text-editor-text font-medium mb-2">AI Assistant - Build Anything</p>
+                            <p className="text-xs text-editor-text-dim mb-3">Tell me what you want to build!</p>
+                            
+                            <div className="space-y-2 mb-3">
+                              <Button 
+                                onClick={() => setShowQuickStart(true)}
+                                size="sm"
+                                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium text-xs"
+                              >
+                                <Play className="h-3 w-3 mr-1" />
+                                Browse Templates
+                              </Button>
+                              
+                              <div className="space-y-1">
+                                <p className="text-xs text-editor-text-dim font-medium">Try these:</p>
+                                {[
+                                  "Build a todo app",
+                                  "Create a calculator", 
+                                  "Make a weather app",
+                                  "Build a portfolio"
+                                ].map((example, index) => (
+                                  <button
+                                    key={index}
+                                    onClick={() => setAIInput(example)}
+                                    className="block w-full text-left px-2 py-1 text-xs bg-editor-bg hover:bg-editor-primary/10 border border-editor-border hover:border-editor-primary/30 rounded transition-colors"
+                                  >
+                                    <span className="text-editor-primary">"{example}"</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div className="text-xs text-editor-text-dim space-y-1">
+                              <p>• Complete project generation</p>
+                              <p>• Individual file creation</p>
+                              <p>• Code help & debugging</p>
+                            </div>
+                          </div>
+                        ) : (
+                          aiMessages.map((msg, index) => (
+                            <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                              <div className={`max-w-[90%] rounded-lg p-2 ${
+                                msg.role === 'user' 
+                                  ? 'bg-editor-primary text-white' 
+                                  : 'bg-editor-bg border border-editor-border text-editor-text'
+                              }`}>
+                                <p className="text-xs whitespace-pre-wrap">{msg.content}</p>
+                                
+                                {/* Action Buttons for Code Generation */}
+                                {msg.actions && msg.actions.length > 0 && (
+                                  <div className="mt-2 pt-2 border-t border-editor-border space-y-1">
+                                    <p className="text-xs text-editor-text-dim">I can help you build this:</p>
+                                    {msg.actions.map((action, actionIndex) => (
+                                      <button
+                                        key={actionIndex}
+                                        onClick={() => {
+                                          if (action.type === 'generate-project') {
+                                            handleGenerateProject(action.data);
+                                          } else if (action.type === 'generate-file') {
+                                            handleGenerateFile(action.data);
+                                          }
+                                        }}
+                                        disabled={isGenerating}
+                                        className="w-full text-left px-2 py-1 text-xs bg-editor-primary/10 hover:bg-editor-primary/20 border border-editor-primary/30 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
+                                      >
+                                        <span className="text-editor-primary font-medium">{action.label}</span>
+                                        {isGenerating ? (
+                                          <div className="w-2 h-2 border border-editor-primary border-t-transparent rounded-full animate-spin"></div>
+                                        ) : (
+                                          <Play className="h-2 w-2 text-editor-primary" />
+                                        )}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                                
+                                <p className="text-xs opacity-70 mt-1">
+                                  {new Date(msg.timestamp).toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                        {isAILoading && (
+                          <div className="flex justify-start">
+                            <div className="bg-editor-bg border border-editor-border rounded-lg p-2">
+                              <div className="flex items-center space-x-1">
+                                <div className="w-1 h-1 bg-editor-primary rounded-full animate-bounce"></div>
+                                <div className="w-1 h-1 bg-editor-primary rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                                <div className="w-1 h-1 bg-editor-primary rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
-                    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                      <div className="flex-1 overflow-y-auto p-3" id="chat-messages">
-                        <div className="space-y-3">
-                          {aiMessages.length === 0 ? (
-                            <div className="text-center">
-                              <Bot className="h-10 w-10 mx-auto mb-3 text-editor-primary" />
-                              <p className="text-xs text-editor-text font-medium mb-2">AI Assistant - Build Anything</p>
-                              <p className="text-xs text-editor-text-dim mb-3">Tell me what you want to build!</p>
-                              
-                              <div className="space-y-2 mb-3">
-                                <Button 
-                                  onClick={() => setShowQuickStart(true)}
-                                  size="sm"
-                                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium text-xs"
-                                >
-                                  <Play className="h-3 w-3 mr-1" />
-                                  Browse Templates
-                                </Button>
-                                
-                                <div className="space-y-1">
-                                  <p className="text-xs text-editor-text-dim font-medium">Try these:</p>
-                                  {[
-                                    "Build a todo app",
-                                    "Create a calculator", 
-                                    "Make a weather app",
-                                    "Build a portfolio"
-                                  ].map((example, index) => (
-                                    <button
-                                      key={index}
-                                      onClick={() => setAIInput(example)}
-                                      className="block w-full text-left px-2 py-1 text-xs bg-editor-bg hover:bg-editor-primary/10 border border-editor-border hover:border-editor-primary/30 rounded transition-colors"
-                                    >
-                                      <span className="text-editor-primary">"{example}"</span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                              
-                              <div className="text-xs text-editor-text-dim space-y-1">
-                                <p>• Complete project generation</p>
-                                <p>• Individual file creation</p>
-                                <p>• Code help & debugging</p>
-                              </div>
-                            </div>
-                          ) : (
-                            aiMessages.map((msg, index) => (
-                              <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[90%] rounded-lg p-2 ${
-                                  msg.role === 'user' 
-                                    ? 'bg-editor-primary text-white' 
-                                    : 'bg-editor-bg border border-editor-border text-editor-text'
-                                }`}>
-                                  <p className="text-xs whitespace-pre-wrap">{msg.content}</p>
-                                  
-                                  {/* Action Buttons for Code Generation */}
-                                  {msg.actions && msg.actions.length > 0 && (
-                                    <div className="mt-2 pt-2 border-t border-editor-border space-y-1">
-                                      <p className="text-xs text-editor-text-dim">I can help you build this:</p>
-                                      {msg.actions.map((action, actionIndex) => (
-                                        <button
-                                          key={actionIndex}
-                                          onClick={() => {
-                                            if (action.type === 'generate-project') {
-                                              handleGenerateProject(action.data);
-                                            } else if (action.type === 'generate-file') {
-                                              handleGenerateFile(action.data);
-                                            }
-                                          }}
-                                          disabled={isGenerating}
-                                          className="w-full text-left px-2 py-1 text-xs bg-editor-primary/10 hover:bg-editor-primary/20 border border-editor-primary/30 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
-                                        >
-                                          <span className="text-editor-primary font-medium">{action.label}</span>
-                                          {isGenerating ? (
-                                            <div className="w-2 h-2 border border-editor-primary border-t-transparent rounded-full animate-spin"></div>
-                                          ) : (
-                                            <Play className="h-2 w-2 text-editor-primary" />
-                                          )}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  )}
-                                  
-                                  <p className="text-xs opacity-70 mt-1">
-                                    {new Date(msg.timestamp).toLocaleTimeString()}
-                                  </p>
-                                </div>
-                              </div>
-                            ))
-                          )}
-                          {isAILoading && (
-                            <div className="flex justify-start">
-                              <div className="bg-editor-bg border border-editor-border rounded-lg p-2">
-                                <div className="flex items-center space-x-1">
-                                  <div className="w-1 h-1 bg-editor-primary rounded-full animate-bounce"></div>
-                                  <div className="w-1 h-1 bg-editor-primary rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                                  <div className="w-1 h-1 bg-editor-primary rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="p-3 border-t border-editor-border">
-                        <form id="ai-form" onSubmit={handleAISubmit} className="flex space-x-2">
-                          <input
-                            type="text"
-                            value={aiInput}
-                            onChange={(e) => setAIInput(e.target.value)}
-                            placeholder="Ask AI to build something..."
-                            className="flex-1 px-2 py-1 text-xs bg-editor-bg border border-editor-border rounded text-editor-text placeholder:text-editor-text-dim focus:outline-none focus:ring-1 focus:ring-editor-primary"
-                            disabled={isAILoading || isGenerating}
-                          />
-                          <button 
-                            type="submit"
-                            disabled={isAILoading || isGenerating || !aiInput.trim()}
-                            className="px-2 py-1 bg-editor-primary text-white rounded hover:bg-editor-primary/80 transition-colors disabled:opacity-50"
-                          >
-                            <Send className="h-3 w-3" />
-                          </button>
-                        </form>
-                        <p className="text-xs text-editor-text-dim mt-1">Press Enter to send</p>
-                      </div>
+                    <div className="p-3 border-t border-editor-border">
+                      <form id="ai-form" onSubmit={handleAISubmit} className="flex space-x-2">
+                        <input
+                          type="text"
+                          value={aiInput}
+                          onChange={(e) => setAIInput(e.target.value)}
+                          placeholder="Ask AI to build something..."
+                          className="flex-1 px-2 py-1 text-xs bg-editor-bg border border-editor-border rounded text-editor-text placeholder:text-editor-text-dim focus:outline-none focus:ring-1 focus:ring-editor-primary"
+                          disabled={isAILoading || isGenerating}
+                        />
+                        <button 
+                          type="submit"
+                          disabled={isAILoading || isGenerating || !aiInput.trim()}
+                          className="px-2 py-1 bg-editor-primary text-white rounded hover:bg-editor-primary/80 transition-colors disabled:opacity-50"
+                        >
+                          <Send className="h-3 w-3" />
+                        </button>
+                      </form>
+                      <p className="text-xs text-editor-text-dim mt-1">Press Enter to send</p>
                     </div>
                   </div>
                 </div>
-                
-                <Terminal
-                  projectId={currentProjectId}
-                  isMaximized={isTerminalMaximized}
-                  onToggleMaximize={() => setIsTerminalMaximized(!isTerminalMaximized)}
-                />
               </div>
+              
+              <Terminal
+                projectId={currentProjectId}
+                isMaximized={isTerminalMaximized}
+                onToggleMaximize={() => setIsTerminalMaximized(!isTerminalMaximized)}
+              />
             </div>
           </TabsContent>
           
