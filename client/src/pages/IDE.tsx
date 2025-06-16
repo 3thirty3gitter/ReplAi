@@ -12,6 +12,7 @@ import { WorkflowBuilder } from "@/components/WorkflowBuilder";
 import { DeploymentCenter } from "@/components/DeploymentCenter";
 import { ProjectTemplates } from "@/components/ProjectTemplates";
 import { QuickStartTemplates } from "@/components/QuickStartTemplates";
+import { HelpCenter } from "@/components/HelpCenter";
 import SettingsPage from "./Settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ export default function IDE() {
   const [activeTab, setActiveTab] = useState<string>('code');
   const [showTemplates, setShowTemplates] = useState(false);
   const [showQuickStart, setShowQuickStart] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [aiMessages, setAIMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: number, actions?: Array<{type: 'generate-project' | 'generate-file', label: string, data: any}>}>>([]);
   const [aiInput, setAIInput] = useState('');
   const [isAILoading, setIsAILoading] = useState(false);
@@ -473,6 +475,7 @@ export default function IDE() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setShowHelp(true)}
               className="text-xs bg-editor-surface hover:bg-editor-bg border-editor-border"
             >
               <HelpCircle className="h-3 w-3 mr-1" />
@@ -635,18 +638,18 @@ export default function IDE() {
                   </div>
                   
                   <div className="p-4 border-t border-editor-border">
-                    <form onSubmit={handleAISubmit} className="flex space-x-2">
+                    <form id="ai-form" onSubmit={handleAISubmit} className="flex space-x-2">
                       <input
                         type="text"
                         value={aiInput}
                         onChange={(e) => setAIInput(e.target.value)}
-                        placeholder="Ask AI for help..."
+                        placeholder="Ask AI to build something..."
                         className="flex-1 px-3 py-2 text-sm bg-editor-bg border border-editor-border rounded-md text-editor-text placeholder:text-editor-text-dim focus:outline-none focus:ring-2 focus:ring-editor-primary"
-                        disabled={isAILoading}
+                        disabled={isAILoading || isGenerating}
                       />
                       <button 
                         type="submit"
-                        disabled={isAILoading || !aiInput.trim()}
+                        disabled={isAILoading || isGenerating || !aiInput.trim()}
                         className="px-3 py-2 bg-editor-primary text-white rounded-md hover:bg-editor-primary/80 transition-colors disabled:opacity-50"
                       >
                         <Send className="h-4 w-4" />
@@ -737,6 +740,10 @@ export default function IDE() {
             }, 100);
           }}
         />
+      )}
+
+      {showHelp && (
+        <HelpCenter onClose={() => setShowHelp(false)} />
       )}
     </div>
   );
