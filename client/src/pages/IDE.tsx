@@ -350,20 +350,33 @@ export default function IDE() {
           
           {/* AI Assistant Tab */}
           <TabsContent value="ai" className="flex flex-1 m-0">
-            <div className="w-96 border-r border-editor-border">
-              <AIAssistant
-                projectId={currentProjectId}
-                isOpen={true}
-                onClose={() => setActiveTab('code')}
-                currentCode={currentCode}
-                currentLanguage={currentLanguage}
-              />
-            </div>
-            <div className="flex-1 bg-editor-bg flex items-center justify-center">
-              <div className="text-center text-editor-text-dim">
-                <Bot className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                <h3 className="text-lg font-medium mb-2">AI Assistant Active</h3>
-                <p className="text-sm">The AI chat is ready on the left. Ask me anything!</p>
+            <div className="flex flex-1 h-full">
+              <div className="w-96 border-r border-editor-border h-full flex flex-col bg-editor-surface">
+                <div className="p-4 border-b border-editor-border">
+                  <h2 className="text-lg font-semibold text-editor-text flex items-center">
+                    <Bot className="h-5 w-5 mr-2 text-editor-primary" />
+                    AI Assistant
+                  </h2>
+                  <p className="text-sm text-editor-text-dim">Ask me anything about your code or project</p>
+                </div>
+                
+                <div className="flex-1 flex flex-col min-h-0">
+                  <AIAssistant
+                    projectId={currentProjectId}
+                    isOpen={true}
+                    onClose={() => setActiveTab('code')}
+                    currentCode={currentCode}
+                    currentLanguage={currentLanguage}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex-1 bg-editor-bg flex items-center justify-center">
+                <div className="text-center text-editor-text-dim">
+                  <Bot className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                  <h3 className="text-lg font-medium mb-2">AI Assistant Active</h3>
+                  <p className="text-sm">The AI chat is ready on the left. Ask me anything!</p>
+                </div>
               </div>
             </div>
           </TabsContent>
