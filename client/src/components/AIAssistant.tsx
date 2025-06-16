@@ -93,6 +93,8 @@ export function AIAssistant({
           });
 
           const data = await response.json();
+          console.log('App generation response:', data);
+          
           setIsGenerating(false);
           onAppBuilding?.(false, [], 0);
           
@@ -101,22 +103,29 @@ export function AIAssistant({
             try {
               const filesResponse = await apiRequest('GET', `/api/projects/${projectId}/files`);
               const allFiles = await filesResponse.json();
+              console.log('All files after generation:', allFiles.length);
               
-              // Get the newly created files (assuming they're the most recent ones)
-              const recentFiles = allFiles.slice(-data.filesCreated);
+              // Get the most recently created file (should be our generated app)
+              const newestFile = allFiles[allFiles.length - 1];
               
-              // Format files for the preview component
-              const previewFiles = recentFiles.map((file: any) => ({
-                name: file.name,
-                content: file.content,
-                language: file.language,
-                path: file.path
-              }));
-              
-              onAppGenerated?.(previewFiles);
+              if (newestFile && newestFile.content) {
+                const previewFiles = [{
+                  name: newestFile.name,
+                  content: newestFile.content,
+                  language: newestFile.language,
+                  path: newestFile.path
+                }];
+                
+                console.log('Setting preview content:', newestFile.content.substring(0, 200));
+                onAppGenerated?.(previewFiles);
+              } else {
+                console.error('No valid file content found for preview');
+              }
             } catch (fileError) {
               console.error('Error fetching generated files:', fileError);
             }
+          } else {
+            console.error('App generation failed or no files created:', data);
           }
 
           return {
