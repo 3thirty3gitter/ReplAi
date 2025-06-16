@@ -13,7 +13,8 @@ import {
   Play,
   Clock,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Code2
 } from "lucide-react";
 
 interface TerminalProps {
@@ -165,6 +166,41 @@ export function Terminal({ projectId, isMaximized, onToggleMaximize }: TerminalP
     }));
   };
 
+  const executeCode = async (code: string, language: string) => {
+    if (!code.trim()) return;
+
+    addTerminalLine('input', `Running ${language} code...`);
+    setIsExecuting(true);
+
+    try {
+      const response = await fetch('/api/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, language, projectId })
+      });
+
+      const result: ExecutionResult = await response.json();
+      
+      if (result.output) {
+        addTerminalLine('output', result.output);
+        setOutputs(prev => [...prev, result.output]);
+      }
+      
+      if (result.error) {
+        addTerminalLine('error', result.error);
+        setProblems(prev => [...prev, result.error]);
+      }
+
+      if (result.status === 'completed' && !result.error) {
+        addTerminalLine('success', `✓ Executed successfully in ${result.executionTime}ms`);
+      }
+    } catch (error) {
+      addTerminalLine('error', `Error: ${(error as Error).message}`);
+    }
+
+    setIsExecuting(false);
+  };
+
   const clearTerminal = () => {
     setTerminalLines([]);
     setOutputs([]);
@@ -232,6 +268,12 @@ export function Terminal({ projectId, isMaximized, onToggleMaximize }: TerminalP
               className="text-sm text-editor-text-dim hover:text-editor-text bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-editor-text"
             >
               Problems ({problems.length})
+            </TabsTrigger>
+            <TabsTrigger 
+              value="codeRunner" 
+              className="text-sm text-editor-text-dim hover:text-editor-text bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-editor-text"
+            >
+              Code Runner
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -348,6 +390,62 @@ export function Terminal({ projectId, isMaximized, onToggleMaximize }: TerminalP
               )}
             </div>
           </ScrollArea>
+        </TabsContent>
+
+        <TabsContent value="codeRunner" className="flex-1 m-0 flex flex-col">
+          <div className="p-4 space-y-4 flex-1 flex flex-col">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Code2 className="h-4 w-4 text-editor-primary" />
+                <span className="text-sm font-medium text-editor-text">Code Runner</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <select
+                  value={selectedLanguage}
+                  onChange={(e) => {
+                    setSelectedLanguage(e.target.value);
+                    const lang = supportedLanguages.find(l => l.id === e.target.value);
+                    if (lang) setCodeInput(lang.example);
+                  }}
+                  className="text-xs bg-editor-surface border border-editor-border rounded px-2 py-1 text-editor-text"
+                >
+                  {supportedLanguages.map(lang => (
+                    <option key={lang.id} value={lang.id}>{lang.name}</option>
+                  ))}
+                </select>
+                <Button
+                  onClick={() => executeCode(codeInput, selectedLanguage)}
+                  disabled={isExecuting || !codeInput.trim()}
+                  size="sm"
+                  className="flex items-center space-x-1"
+                >
+                  {isExecuting ? (
+                    <>
+                      <Clock className="h-3 w-3 animate-spin" />
+                      <span>Running...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-3 w-3" />
+                      <span>Run</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            <textarea
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value)}
+              placeholder={`Enter ${selectedLanguage} code here...`}
+              className="flex-1 bg-editor-surface border border-editor-border rounded p-3 text-editor-text font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-editor-primary"
+              style={{ minHeight: '200px' }}
+            />
+
+            <div className="text-xs text-editor-text-dim">
+              Supports: JavaScript, Python, TypeScript, HTML, CSS
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
