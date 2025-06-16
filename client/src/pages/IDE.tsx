@@ -463,7 +463,7 @@ export default function IDE() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(projects || []).map((proj) => (
+                {projects.map((proj) => (
                   <SelectItem key={proj.id} value={proj.id.toString()}>
                     {proj.name}
                   </SelectItem>
@@ -529,31 +529,82 @@ export default function IDE() {
             </TabsList>
           </Tabs>
           
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowTemplates(true)}
-              className="text-xs bg-editor-surface hover:bg-editor-bg border-editor-border"
-            >
-              <FileText className="h-3 w-3 mr-1" />
-              Templates
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowHelp(true)}
-              className="text-xs bg-editor-surface hover:bg-editor-bg border-editor-border"
-            >
-              <HelpCircle className="h-3 w-3 mr-1" />
-              Help
-            </Button>
-          </div>
+        </div>
+
+        {/* Tab Content */}
+        <div className="flex-1 flex flex-col">
+          <TabsContent value="preview" className="flex-1 m-0">
+            <LivePreview
+              projectId={currentProjectId}
+              isBuilding={isAppBuilding}
+              buildingSteps={buildingSteps}
+              currentStep={currentBuildStep}
+              generatedFiles={generatedAppFiles}
+            />
+          </TabsContent>
+
+          <TabsContent value="code" className="flex-1 m-0">
+            <div className="flex flex-1 overflow-hidden">
+              {showFileTree && (
+                <div className="w-64 border-r border-editor-border bg-editor-surface">
+                  <div className="h-full flex flex-col">
+                    <div className="flex items-center justify-between p-3 border-b border-editor-border">
+                      <h3 className="text-sm font-medium text-editor-text">Explorer</h3>
+                      <button
+                        onClick={() => setShowFileTree(false)}
+                        className="p-1 hover:bg-editor-bg rounded text-editor-text-dim hover:text-editor-text"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <FileExplorer
+                        projectId={currentProjectId}
+                        onFileSelect={handleFileSelect}
+                        selectedFileId={activeFileId}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex-1 flex flex-col">
+                <CodeEditor
+                  openFiles={openFiles}
+                  activeFileId={activeFileId}
+                  onFileChange={handleFileChange}
+                  onFileClose={handleFileClose}
+                  onFileSelect={setActiveFileId}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="database" className="flex-1 m-0">
+            <DatabaseBuilder projectId={currentProjectId} />
+          </TabsContent>
+
+          <TabsContent value="deploy" className="flex-1 m-0">
+            <DeploymentCenter projectId={currentProjectId} />
+          </TabsContent>
         </div>
       </div>
       
-      <div className="flex flex-1 overflow-hidden">
-        <Tabs value={activeTab} className="flex flex-1">
+      {/* Terminal Panel */}
+      {showTerminal && (
+        <div className="h-64 border-t border-editor-border bg-editor-surface">
+          <div className="flex items-center justify-between p-2 border-b border-editor-border">
+            <h3 className="text-sm font-medium text-editor-text">Terminal</h3>
+            <button
+              onClick={() => setShowTerminal(false)}
+              className="p-1 hover:bg-editor-bg rounded text-editor-text-dim hover:text-editor-text"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          </div>
+          <Terminal projectId={currentProjectId} />
+        </div>
+      )}
           {/* Code Editor Tab */}
           <TabsContent value="code" className="flex flex-1 m-0">
             <div className="flex flex-1 overflow-hidden">
