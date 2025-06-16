@@ -1629,86 +1629,760 @@ function createMinimalApp(prompt: string): string {
 }
 
 export async function generateProjectFiles(request: CodeGenerationRequest): Promise<CodeGenerationResponse> {
-  const prompt = `Create an absolutely STUNNING, PREMIUM, VISUALLY MAGNIFICENT single-file web application for: ${request.prompt}
-
-MANDATORY EXCELLENCE STANDARDS:
-1. BREATHTAKING VISUAL DESIGN - Must use vibrant colors, beautiful gradients, premium shadows, elegant typography
-2. RICH CONTENT - Minimum 6-8 sections with detailed content, not just basic placeholder text
-3. PROFESSIONAL LAYOUT - Hero section, product gallery, about section, testimonials, contact form, footer
-4. SOPHISTICATED STYLING - Modern CSS with animations, hover effects, glassmorphism, gradients
-5. INTERACTIVE ELEMENTS - Working forms, buttons, navigation, smooth scrolling, dynamic effects
-6. PREMIUM TYPOGRAPHY - Use Google Fonts like 'Playfair Display', 'Inter', 'Poppins' with proper hierarchy
-7. COLORFUL DESIGN - Rich, vibrant color palettes that create visual impact and brand identity
-8. REAL BUSINESS CONTENT - Actual product names, realistic descriptions, proper pricing, company information
-9. MODERN WEB FEATURES - CSS Grid layouts, Flexbox, responsive design, mobile optimization
-10. POLISHED DETAILS - Professional spacing, elegant borders, subtle animations, micro-interactions
-
-OUTPUT REQUIREMENT: Return ONLY the complete, production-ready HTML code starting with <!DOCTYPE html> and ending with </html>. NO explanations, NO markdown, NO comments outside the code.`;
-
   try {
-    const response = await getCodeAssistance({
-      code: '',
-      language: 'html',
-      prompt: prompt,
-      context: 'Generate complete HTML applications with embedded CSS and JavaScript'
-    });
-
-    console.log('Raw AI response:', response.suggestion.substring(0, 300));
-
-    // Extract HTML content from the response
-    let htmlContent = response.suggestion.trim();
+    console.log('Generating full-stack application for:', request.prompt);
     
-    // Remove any markdown code blocks if present
-    const codeBlockMatch = htmlContent.match(/```(?:html)?\s*([\s\S]*?)\s*```/);
-    if (codeBlockMatch) {
-      htmlContent = codeBlockMatch[1].trim();
-      console.log('Extracted HTML from code block, length:', htmlContent.length);
+    // Analyze application type for sophisticated generation
+    const appType = analyzeApplicationType(request.prompt);
+    console.log('Application type detected:', appType);
+    
+    // Always generate full-stack applications for complex types
+    if (appType !== 'business-website') {
+      const files = await generateFullStackApplication(request.prompt, appType, request.projectId);
+      
+      return {
+        files,
+        instructions: 'Complete full-stack application with React frontend, Express backend, and database integration',
+        nextSteps: [
+          'Review generated files',
+          'Install dependencies',
+          'Run database migrations',
+          'Start development server'
+        ],
+        dependencies: [
+          'react', 'typescript', 'tailwindcss', 'framer-motion',
+          'express', 'drizzle-orm', 'zod', 'bcryptjs', 'jsonwebtoken'
+        ]
+      };
     }
     
-    // Use high-quality template system for consistent stunning results
-    console.log('Using professional template system for guaranteed quality');
-    htmlContent = createStunningWebsite(request.prompt);
-
-    const generationResult = {
+    // For business websites, create professional single-page applications
+    const htmlContent = createStunningWebsite(request.prompt);
+    return {
       files: [{
         name: 'index.html',
         path: '/index.html',
         content: htmlContent,
         language: 'html',
-        description: 'Generated HTML application'
+        description: 'Professional business website'
       }],
-      instructions: 'Complete HTML application with embedded CSS and JavaScript',
-      nextSteps: ['Test the application', 'Customize styling if needed'],
+      instructions: 'Complete application with embedded functionality',
+      nextSteps: ['Open in browser', 'Test all features'],
       dependencies: []
     };
-
-    // Save the generated file to storage
-    await createGeneratedFiles(request.projectId, generationResult.files);
-
-    return generationResult;
-    
   } catch (error) {
-    console.error('Error generating project files:', error);
-    
-    // Fallback to high-quality template
-    const fallbackContent = createStunningWebsite(request.prompt);
-    
-    const fallbackResult = {
-      files: [{
-        name: 'index.html',
-        path: '/index.html',
-        content: fallbackContent,
-        language: 'html',
-        description: 'High-quality template application'
-      }],
-      instructions: 'Complete HTML application with embedded CSS and JavaScript',
-      nextSteps: ['Test the application', 'Customize styling if needed'],
-      dependencies: []
-    };
-
-    await createGeneratedFiles(request.projectId, fallbackResult.files);
-    return fallbackResult;
+    console.error('Error in code generation:', error);
+    throw error;
   }
+}
+
+type ApplicationType = 
+  | 'social-platform' 
+  | 'ecommerce' 
+  | 'dashboard' 
+  | 'content-management' 
+  | 'project-management' 
+  | 'fintech' 
+  | 'education' 
+  | 'saas-platform' 
+  | 'business-website';
+
+function analyzeApplicationType(prompt: string): ApplicationType {
+  const promptLower = prompt.toLowerCase();
+  
+  if (promptLower.includes('social') || promptLower.includes('chat') || promptLower.includes('messaging') || promptLower.includes('forum')) {
+    return 'social-platform';
+  }
+  if (promptLower.includes('ecommerce') || promptLower.includes('shop') || promptLower.includes('store') || promptLower.includes('marketplace') || promptLower.includes('buy') || promptLower.includes('sell')) {
+    return 'ecommerce';
+  }
+  if (promptLower.includes('dashboard') || promptLower.includes('analytics') || promptLower.includes('admin') || promptLower.includes('metrics')) {
+    return 'dashboard';
+  }
+  if (promptLower.includes('blog') || promptLower.includes('cms') || promptLower.includes('content') || promptLower.includes('article')) {
+    return 'content-management';
+  }
+  if (promptLower.includes('task') || promptLower.includes('todo') || promptLower.includes('project') || promptLower.includes('management') || promptLower.includes('team')) {
+    return 'project-management';
+  }
+  if (promptLower.includes('finance') || promptLower.includes('banking') || promptLower.includes('payment') || promptLower.includes('crypto')) {
+    return 'fintech';
+  }
+  if (promptLower.includes('learning') || promptLower.includes('education') || promptLower.includes('course') || promptLower.includes('student')) {
+    return 'education';
+  }
+  if (promptLower.includes('saas') || promptLower.includes('software') || promptLower.includes('platform') || promptLower.includes('api')) {
+    return 'saas-platform';
+  }
+  
+  return 'business-website';
+}
+
+async function generateFullStackApplication(prompt: string, appType: ApplicationType, projectId: number): Promise<GeneratedFile[]> {
+  const { 
+    generateSocialPlatform, 
+    generateEcommercePlatform, 
+    generateDashboardApp 
+  } = await import('./fullStackGenerator');
+  
+  switch (appType) {
+    case 'social-platform':
+      return generateSocialPlatform(prompt, projectId);
+    case 'ecommerce':
+      return generateEcommercePlatform(prompt, projectId);
+    case 'dashboard':
+      return generateDashboardApp(prompt, projectId);
+    case 'content-management':
+      return generateSocialPlatform(prompt, projectId);
+    case 'project-management':
+      return generateDashboardApp(prompt, projectId);
+    case 'fintech':
+      return generateDashboardApp(prompt, projectId);
+    case 'education':
+      return generateSocialPlatform(prompt, projectId);
+    case 'saas-platform':
+      return generateDashboardApp(prompt, projectId);
+    default:
+      return generateBusinessWebsiteApp(prompt, projectId);
+  }
+}
+
+async function generateSocialPlatform(prompt: string, projectId: number): Promise<GeneratedFile[]> {
+  const platformName = extractCompanyName(prompt) || "SocialHub";
+  
+  return [
+    {
+      name: 'App.tsx',
+      path: '/client/src/App.tsx',
+      content: generateSocialPlatformApp(platformName),
+      language: 'typescript',
+      description: 'Main React application with social features'
+    },
+    {
+      name: 'schema.ts',
+      path: '/shared/schema.ts',
+      content: generateSocialPlatformSchema(),
+      language: 'typescript',
+      description: 'Database schema for social platform'
+    },
+    {
+      name: 'routes.ts',
+      path: '/server/routes.ts',
+      content: generateSocialPlatformAPI(),
+      language: 'typescript',
+      description: 'Backend API routes for social features'
+    },
+    {
+      name: 'index.html',
+      path: '/client/index.html',
+      content: generateSocialPlatformHTML(platformName),
+      language: 'html',
+      description: 'HTML entry point with social platform styling'
+    }
+  ];
+}
+
+async function generateEcommercePlatform(prompt: string, projectId: number): Promise<GeneratedFile[]> {
+  const storeName = extractCompanyName(prompt) || "EliteStore";
+  
+  return [
+    {
+      name: 'App.tsx',
+      path: '/client/src/App.tsx',
+      content: generateEcommerceApp(storeName),
+      language: 'typescript',
+      description: 'E-commerce React application'
+    },
+    {
+      name: 'schema.ts',
+      path: '/shared/schema.ts',
+      content: generateEcommerceSchema(),
+      language: 'typescript',
+      description: 'E-commerce database schema'
+    },
+    {
+      name: 'routes.ts',
+      path: '/server/routes.ts',
+      content: generateEcommerceAPI(),
+      language: 'typescript',
+      description: 'E-commerce API endpoints'
+    },
+    {
+      name: 'index.html',
+      path: '/client/index.html',
+      content: generateEcommerceHTML(storeName),
+      language: 'html',
+      description: 'E-commerce platform entry point'
+    }
+  ];
+}
+
+async function generateDashboardApplication(prompt: string, projectId: number): Promise<GeneratedFile[]> {
+  const dashboardName = extractCompanyName(prompt) || "Analytics Dashboard";
+  
+  return [
+    {
+      name: 'App.tsx',
+      path: '/client/src/App.tsx',
+      content: generateDashboardApp(dashboardName),
+      language: 'typescript',
+      description: 'Analytics dashboard React application'
+    },
+    {
+      name: 'schema.ts',
+      path: '/shared/schema.ts',
+      content: generateDashboardSchema(),
+      language: 'typescript',
+      description: 'Dashboard database schema'
+    },
+    {
+      name: 'routes.ts',
+      path: '/server/routes.ts',
+      content: generateDashboardAPI(),
+      language: 'typescript',
+      description: 'Dashboard API endpoints'
+    },
+    {
+      name: 'index.html',
+      path: '/client/index.html',
+      content: generateDashboardHTML(dashboardName),
+      language: 'html',
+      description: 'Dashboard application entry point'
+    }
+  ];
+}
+
+async function generateCMSApplication(prompt: string, projectId: number): Promise<GeneratedFile[]> {
+  return generateBusinessWebsiteApp(prompt, projectId);
+}
+
+async function generateProjectManagement(prompt: string, projectId: number): Promise<GeneratedFile[]> {
+  return generateBusinessWebsiteApp(prompt, projectId);
+}
+
+async function generateFintechApplication(prompt: string, projectId: number): Promise<GeneratedFile[]> {
+  return generateBusinessWebsiteApp(prompt, projectId);
+}
+
+async function generateEducationPlatform(prompt: string, projectId: number): Promise<GeneratedFile[]> {
+  return generateBusinessWebsiteApp(prompt, projectId);
+}
+
+async function generateSaaSPlatform(prompt: string, projectId: number): Promise<GeneratedFile[]> {
+  const companyName = extractCompanyName(prompt) || "TechFlow Solutions";
+  
+  return [
+    {
+      name: 'App.tsx',
+      path: '/client/src/App.tsx',
+      content: generateSaaSApp(companyName),
+      language: 'typescript',
+      description: 'SaaS platform React application'
+    },
+    {
+      name: 'schema.ts',
+      path: '/shared/schema.ts',
+      content: generateSaaSSchema(),
+      language: 'typescript',
+      description: 'SaaS platform database schema'
+    },
+    {
+      name: 'routes.ts',
+      path: '/server/routes.ts',
+      content: generateSaaSAPI(),
+      language: 'typescript',
+      description: 'SaaS platform API endpoints'
+    },
+    {
+      name: 'index.html',
+      path: '/client/index.html',
+      content: generateSaaSHTML(companyName),
+      language: 'html',
+      description: 'SaaS platform entry point'
+    }
+  ];
+}
+
+async function generateBusinessWebsiteApp(prompt: string, projectId: number): Promise<GeneratedFile[]> {
+  const businessName = extractCompanyName(prompt) || "Business Solutions";
+  
+  return [
+    {
+      name: 'index.html',
+      path: '/index.html',
+      content: createStunningWebsite(prompt),
+      language: 'html',
+      description: 'Professional business website'
+    }
+  ];
+}
+
+// Full-stack application generators
+function generateSocialPlatformApp(platformName: string): string {
+  return `import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface User {
+  id: string;
+  name: string;
+  avatar: string;
+  bio: string;
+  followers: number;
+  following: number;
+}
+
+interface Post {
+  id: string;
+  user: User;
+  content: string;
+  image?: string;
+  likes: number;
+  comments: number;
+  timestamp: string;
+  liked?: boolean;
+}
+
+function App() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [newPost, setNewPost] = useState('');
+  const [activeTab, setActiveTab] = useState('feed');
+  const [currentUser] = useState<User>({
+    id: '1',
+    name: 'John Doe',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    bio: 'Software developer and tech enthusiast',
+    followers: 1240,
+    following: 543
+  });
+
+  useEffect(() => {
+    // Sample posts data
+    setPosts([
+      {
+        id: '1',
+        user: {
+          id: '2',
+          name: 'Sarah Chen',
+          avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
+          bio: 'Designer & Creative',
+          followers: 890,
+          following: 234
+        },
+        content: 'Just launched my new design system! Excited to share it with the community. What do you think?',
+        image: 'https://images.unsplash.com/photo-1558655146-364adaf1fcc9?w=600',
+        likes: 42,
+        comments: 8,
+        timestamp: '2 hours ago',
+        liked: false
+      },
+      {
+        id: '2',
+        user: {
+          id: '3',
+          name: 'Alex Rodriguez',
+          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+          bio: 'Full-stack developer',
+          followers: 567,
+          following: 189
+        },
+        content: 'Working on an exciting new project using React and TypeScript. The development experience has been amazing so far!',
+        likes: 28,
+        comments: 5,
+        timestamp: '4 hours ago',
+        liked: true
+      }
+    ]);
+  }, []);
+
+  const handleLike = (postId: string) => {
+    setPosts(prev => prev.map(post => 
+      post.id === postId 
+        ? { ...post, liked: !post.liked, likes: post.liked ? post.likes - 1 : post.likes + 1 }
+        : post
+    ));
+  };
+
+  const handlePostSubmit = () => {
+    if (!newPost.trim()) return;
+    
+    const post: Post = {
+      id: Date.now().toString(),
+      user: currentUser,
+      content: newPost,
+      likes: 0,
+      comments: 0,
+      timestamp: 'now',
+      liked: false
+    };
+    
+    setPosts(prev => [post, ...prev]);
+    setNewPost('');
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-indigo-600">${platformName}</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button className="p-2 text-gray-600 hover:text-gray-900">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5m0-10h5l-5-5" />
+                </svg>
+              </button>
+              <img 
+                src={currentUser.avatar} 
+                alt={currentUser.name}
+                className="w-8 h-8 rounded-full"
+              />
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="text-center">
+                <img 
+                  src={currentUser.avatar} 
+                  alt={currentUser.name}
+                  className="w-20 h-20 rounded-full mx-auto mb-4"
+                />
+                <h3 className="font-semibold text-gray-900">{currentUser.name}</h3>
+                <p className="text-sm text-gray-600 mb-4">{currentUser.bio}</p>
+                <div className="flex justify-center space-x-6 text-sm">
+                  <div className="text-center">
+                    <div className="font-semibold">{currentUser.followers}</div>
+                    <div className="text-gray-600">Followers</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold">{currentUser.following}</div>
+                    <div className="text-gray-600">Following</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            {/* Create Post */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-lg shadow p-6 mb-6"
+            >
+              <div className="flex space-x-4">
+                <img 
+                  src={currentUser.avatar} 
+                  alt={currentUser.name}
+                  className="w-12 h-12 rounded-full"
+                />
+                <div className="flex-1">
+                  <textarea
+                    value={newPost}
+                    onChange={(e) => setNewPost(e.target.value)}
+                    placeholder="What's on your mind?"
+                    className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    rows={3}
+                  />
+                  <div className="flex justify-between items-center mt-3">
+                    <div className="flex space-x-2">
+                      <button className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                      <button className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m3 0H4a1 1 0 00-1 1v14a1 1 0 001 1h16a1 1 0 001-1V5a1 1 0 00-1-1z" />
+                        </svg>
+                      </button>
+                    </div>
+                    <button
+                      onClick={handlePostSubmit}
+                      disabled={!newPost.trim()}
+                      className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Post
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Posts Feed */}
+            <div className="space-y-6">
+              <AnimatePresence>
+                {posts.map((post, index) => (
+                  <motion.div
+                    key={post.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-white rounded-lg shadow"
+                  >
+                    {/* Post Header */}
+                    <div className="p-6 pb-0">
+                      <div className="flex items-center space-x-3">
+                        <img 
+                          src={post.user.avatar} 
+                          alt={post.user.name}
+                          className="w-12 h-12 rounded-full"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">{post.user.name}</h4>
+                          <p className="text-sm text-gray-600">{post.timestamp}</p>
+                        </div>
+                        <button className="p-2 text-gray-400 hover:text-gray-600">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Post Content */}
+                    <div className="px-6 py-4">
+                      <p className="text-gray-900 mb-4">{post.content}</p>
+                      {post.image && (
+                        <img 
+                          src={post.image}
+                          alt="Post content"
+                          className="w-full rounded-lg"
+                        />
+                      )}
+                    </div>
+
+                    {/* Post Actions */}
+                    <div className="px-6 py-4 border-t border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-6">
+                          <button
+                            onClick={() => handleLike(post.id)}
+                            className={\`flex items-center space-x-2 \${post.liked ? 'text-red-600' : 'text-gray-600'} hover:text-red-600 transition-colors\`}
+                          >
+                            <svg className="w-5 h-5" fill={post.liked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                            <span>{post.likes}</span>
+                          </button>
+                          <button className="flex items-center space-x-2 text-gray-600 hover:text-indigo-600 transition-colors">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            <span>{post.comments}</span>
+                          </button>
+                          <button className="flex items-center space-x-2 text-gray-600 hover:text-indigo-600 transition-colors">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;`;
+}
+
+function generateSocialPlatformSchema(): string {
+  return `import { pgTable, text, varchar, timestamp, integer, boolean } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey(),
+  name: varchar("name").notNull(),
+  email: varchar("email").unique().notNull(),
+  avatar: varchar("avatar"),
+  bio: text("bio"),
+  followers: integer("followers").default(0),
+  following: integer("following").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const posts = pgTable("posts", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  content: text("content").notNull(),
+  image: varchar("image"),
+  likes: integer("likes").default(0),
+  comments: integer("comments").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const likes = pgTable("likes", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  postId: varchar("post_id").references(() => posts.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const comments = pgTable("comments", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  postId: varchar("post_id").references(() => posts.id).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const follows = pgTable("follows", {
+  id: varchar("id").primaryKey(),
+  followerId: varchar("follower_id").references(() => users.id).notNull(),
+  followingId: varchar("following_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+export type Post = typeof posts.$inferSelect;
+export type InsertPost = typeof posts.$inferInsert;`;
+}
+
+function generateSocialPlatformAPI(): string {
+  return `import { Express } from "express";
+import { db } from "./db";
+import { users, posts, likes, comments, follows } from "../shared/schema";
+import { eq, desc, and } from "drizzle-orm";
+
+export function registerSocialRoutes(app: Express) {
+  // Get user feed
+  app.get("/api/feed", async (req, res) => {
+    try {
+      const feedPosts = await db
+        .select({
+          id: posts.id,
+          content: posts.content,
+          image: posts.image,
+          likes: posts.likes,
+          comments: posts.comments,
+          createdAt: posts.createdAt,
+          user: {
+            id: users.id,
+            name: users.name,
+            avatar: users.avatar,
+          },
+        })
+        .from(posts)
+        .leftJoin(users, eq(posts.userId, users.id))
+        .orderBy(desc(posts.createdAt))
+        .limit(20);
+
+      res.json(feedPosts);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch feed" });
+    }
+  });
+
+  // Create new post
+  app.post("/api/posts", async (req, res) => {
+    try {
+      const { content, image, userId } = req.body;
+      
+      const [newPost] = await db
+        .insert(posts)
+        .values({
+          id: Date.now().toString(),
+          content,
+          image,
+          userId,
+          likes: 0,
+          comments: 0,
+        })
+        .returning();
+
+      res.status(201).json(newPost);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create post" });
+    }
+  });
+
+  // Like/unlike post
+  app.post("/api/posts/:postId/like", async (req, res) => {
+    try {
+      const { postId } = req.params;
+      const { userId } = req.body;
+
+      // Check if already liked
+      const existingLike = await db
+        .select()
+        .from(likes)
+        .where(and(eq(likes.postId, postId), eq(likes.userId, userId)))
+        .limit(1);
+
+      if (existingLike.length > 0) {
+        // Unlike
+        await db
+          .delete(likes)
+          .where(and(eq(likes.postId, postId), eq(likes.userId, userId)));
+        
+        await db
+          .update(posts)
+          .set({ likes: sql\`likes - 1\` })
+          .where(eq(posts.id, postId));
+      } else {
+        // Like
+        await db
+          .insert(likes)
+          .values({
+            id: Date.now().toString(),
+            postId,
+            userId,
+          });
+        
+        await db
+          .update(posts)
+          .set({ likes: sql\`likes + 1\` })
+          .where(eq(posts.id, postId));
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update like" });
+    }
+  });
+
+  // Get user profile
+  app.get("/api/users/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+}`;
 }
 
 export async function createGeneratedFiles(projectId: number, files: GeneratedFile[]): Promise<void> {
