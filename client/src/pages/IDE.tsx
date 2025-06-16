@@ -245,18 +245,18 @@ export default function IDE() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
             <TabsList className="bg-transparent border-none h-auto p-0 space-x-1">
               <TabsTrigger 
-                value="code" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
-              >
-                <Code2 className="h-4 w-4 mr-2" />
-                Code Editor
-              </TabsTrigger>
-              <TabsTrigger 
                 value="ai" 
                 className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
               >
                 <Bot className="h-4 w-4 mr-2" />
                 AI Assistant
+              </TabsTrigger>
+              <TabsTrigger 
+                value="code" 
+                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
+              >
+                <Code2 className="h-4 w-4 mr-2" />
+                Code Editor
               </TabsTrigger>
               <TabsTrigger 
                 value="visual" 
