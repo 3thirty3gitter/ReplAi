@@ -26,7 +26,8 @@ import {
   Settings,
   HelpCircle,
   Bot,
-  Send
+  Send,
+  Play
 } from "lucide-react";
 import type { Project, File } from "@shared/schema";
 
@@ -216,10 +217,26 @@ export default function IDE() {
 
       const data = await response.json();
 
+      // Analyze the response to determine if it's a code generation request
+      const isCodeRequest = /create|build|generate|make|develop|write.*app|write.*component|write.*function|todo|calculator|game|website|landing|portfolio/i.test(aiInput);
+      const actions = isCodeRequest ? [
+        {
+          type: 'generate-project' as const,
+          label: 'Generate Complete Project',
+          data: { prompt: aiInput, projectType: 'web', framework: 'react' }
+        },
+        {
+          type: 'generate-file' as const,
+          label: 'Generate Single File',
+          data: { prompt: aiInput, language: 'javascript' }
+        }
+      ] : undefined;
+
       const aiResponse = {
         role: 'assistant' as const,
         content: data.message || 'I received your message but had trouble generating a response.',
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        actions
       };
       setAIMessages(prev => [...prev, aiResponse]);
     } catch (error) {
@@ -231,6 +248,102 @@ export default function IDE() {
       setAIMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsAILoading(false);
+    }
+  };
+
+  // AI Action Handlers
+  const handleGenerateProject = async (actionData: any) => {
+    setIsGenerating(true);
+    try {
+      const response = await apiRequest('POST', '/api/ai/generate-project', {
+        prompt: actionData.prompt,
+        projectId: currentProjectId,
+        projectType: actionData.projectType,
+        framework: actionData.framework
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Refresh the file explorer to show new files
+        queryClient.invalidateQueries({ queryKey: ['/api/projects', currentProjectId, 'files'] });
+        
+        const successMessage = {
+          role: 'assistant' as const,
+          content: `✅ Successfully generated ${data.filesCreated} files!\n\n**Files created:**\n${data.files.map((f: any) => `• ${f.name} - ${f.description}`).join('\n')}\n\n**Instructions:**\n${data.instructions}\n\n**Next steps:**\n${data.nextSteps.map((step: string, i: number) => `${i + 1}. ${step}`).join('\n')}`,
+          timestamp: Date.now()
+        };
+        setAIMessages(prev => [...prev, successMessage]);
+
+        toast({
+          title: "Project Generated",
+          description: `Created ${data.filesCreated} files successfully`,
+        });
+      } else {
+        throw new Error('Generation failed');
+      }
+    } catch (error) {
+      const errorMessage = {
+        role: 'assistant' as const,
+        content: `❌ Failed to generate project: ${(error as Error).message}`,
+        timestamp: Date.now()
+      };
+      setAIMessages(prev => [...prev, errorMessage]);
+
+      toast({
+        title: "Generation Failed",
+        description: (error as Error).message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateFile = async (actionData: any) => {
+    setIsGenerating(true);
+    try {
+      const response = await apiRequest('POST', '/api/ai/generate-file', {
+        prompt: actionData.prompt,
+        projectId: currentProjectId,
+        language: actionData.language
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Refresh the file explorer to show new file
+        queryClient.invalidateQueries({ queryKey: ['/api/projects', currentProjectId, 'files'] });
+        
+        const successMessage = {
+          role: 'assistant' as const,
+          content: `✅ Successfully generated file: **${data.file.name}**\n\nPath: ${data.file.path}\nDescription: ${data.file.description}\n\nThe file has been added to your project and is ready to use!`,
+          timestamp: Date.now()
+        };
+        setAIMessages(prev => [...prev, successMessage]);
+
+        toast({
+          title: "File Generated",
+          description: `Created ${data.file.name} successfully`,
+        });
+      } else {
+        throw new Error('File generation failed');
+      }
+    } catch (error) {
+      const errorMessage = {
+        role: 'assistant' as const,
+        content: `❌ Failed to generate file: ${(error as Error).message}`,
+        timestamp: Date.now()
+      };
+      setAIMessages(prev => [...prev, errorMessage]);
+
+      toast({
+        title: "Generation Failed",
+        description: (error as Error).message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -440,6 +553,35 @@ export default function IDE() {
                                 : 'bg-editor-bg border border-editor-border text-editor-text'
                             }`}>
                               <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                              
+                              {/* Action Buttons for Code Generation */}
+                              {msg.actions && msg.actions.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-editor-border space-y-2">
+                                  <p className="text-xs text-editor-text-dim">I can help you build this:</p>
+                                  {msg.actions.map((action, actionIndex) => (
+                                    <button
+                                      key={actionIndex}
+                                      onClick={() => {
+                                        if (action.type === 'generate-project') {
+                                          handleGenerateProject(action.data);
+                                        } else if (action.type === 'generate-file') {
+                                          handleGenerateFile(action.data);
+                                        }
+                                      }}
+                                      disabled={isGenerating}
+                                      className="w-full text-left px-3 py-2 text-xs bg-editor-primary/10 hover:bg-editor-primary/20 border border-editor-primary/30 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
+                                    >
+                                      <span className="text-editor-primary font-medium">{action.label}</span>
+                                      {isGenerating ? (
+                                        <div className="w-3 h-3 border border-editor-primary border-t-transparent rounded-full animate-spin"></div>
+                                      ) : (
+                                        <Play className="h-3 w-3 text-editor-primary" />
+                                      )}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                              
                               <p className="text-xs opacity-70 mt-1">
                                 {new Date(msg.timestamp).toLocaleTimeString()}
                               </p>
