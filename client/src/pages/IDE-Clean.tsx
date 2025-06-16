@@ -166,21 +166,18 @@ export default function IDE() {
     <div className="flex h-screen bg-editor-bg text-editor-text">
       {/* Left Side - AI Assistant (Resizable) */}
       <div 
-        className="border-r border-editor-border bg-editor-surface flex flex-col relative"
+        className="border-r border-editor-border relative"
         style={{ width: `${aiPanelWidth}px` }}
       >
-        {/* AI Assistant Content */}
-        <div className="flex-1">
-          <AIAssistant
-            projectId={currentProjectId}
-            isOpen={true}
-            onClose={() => {}}
-            currentCode={currentCode}
-            currentLanguage={currentLanguage}
-            onAppBuilding={handleAppBuilding}
-            onAppGenerated={handleAppGenerated}
-          />
-        </div>
+        <AIAssistant
+          projectId={currentProjectId}
+          isOpen={true}
+          onClose={() => {}}
+          currentCode={currentCode}
+          currentLanguage={currentLanguage}
+          onAppBuilding={handleAppBuilding}
+          onAppGenerated={handleAppGenerated}
+        />
         
         {/* Resize Handle */}
         <div
