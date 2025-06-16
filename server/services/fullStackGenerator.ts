@@ -833,12 +833,12 @@ function App() {
 
   const addToCart = (product: Product) => {
     setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
+      const existing = prev.find(cartItem => cartItem.id === product.id);
       if (existing) {
-        return prev.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
+        return prev.map(cartItem =>
+          cartItem.id === product.id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem
         );
       }
       return [...prev, { ...product, quantity: 1 }];
@@ -846,7 +846,7 @@ function App() {
   };
 
   const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(item => item.id !== productId));
+    setCart(prev => prev.filter(cartItem => cartItem.id !== productId));
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
@@ -855,14 +855,14 @@ function App() {
       return;
     }
     setCart(prev =>
-      prev.map(item =>
-        item.id === productId ? { ...item, quantity } : item
+      prev.map(cartItem =>
+        cartItem.id === productId ? { ...cartItem, quantity } : cartItem
       )
     );
   };
 
   const getTotalPrice = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    return cart.reduce((total, cartItem) => total + cartItem.price * cartItem.quantity, 0);
   };
 
   const filteredProducts = products.filter(product => {
@@ -1028,22 +1028,22 @@ function App() {
                   <p className="text-center text-gray-500 mt-8">Your cart is empty</p>
                 ) : (
                   <div className="space-y-4">
-                    {cart.map(item => (
-                      <div key={item.id} className="flex items-center space-x-4 bg-gray-50 p-4 rounded-lg">
-                        <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" />
+                    {cart.map(cartItem => (
+                      <div key={cartItem.id} className="flex items-center space-x-4 bg-gray-50 p-4 rounded-lg">
+                        <img src={cartItem.image} alt={cartItem.name} className="w-16 h-16 object-cover rounded" />
                         <div className="flex-1">
-                          <h4 className="font-medium text-sm">{item.name}</h4>
-                          <p className="text-gray-600">${item.price}</p>
+                          <h4 className="font-medium text-sm">{cartItem.name}</h4>
+                          <p className="text-gray-600">\${cartItem.price}</p>
                           <div className="flex items-center space-x-2 mt-2">
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              onClick={() => updateQuantity(cartItem.id, cartItem.quantity - 1)}
                               className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
                             >
                               -
                             </button>
-                            <span className="w-8 text-center">{item.quantity}</span>
+                            <span className="w-8 text-center">{cartItem.quantity}</span>
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              onClick={() => updateQuantity(cartItem.id, cartItem.quantity + 1)}
                               className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
                             >
                               +
@@ -1051,7 +1051,7 @@ function App() {
                           </div>
                         </div>
                         <button
-                          onClick={() => removeFromCart(item.id)}
+                          onClick={() => removeFromCart(cartItem.id)}
                           className="text-red-500 hover:text-red-700"
                         >
                           Remove
