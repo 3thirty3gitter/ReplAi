@@ -3,6 +3,9 @@ import {
   files, 
   aiConversations, 
   codeExecutions,
+  dataTables,
+  workflows,
+  deployments,
   type Project, 
   type InsertProject,
   type File,
@@ -10,7 +13,13 @@ import {
   type AIConversation,
   type InsertAIConversation,
   type CodeExecution,
-  type InsertCodeExecution
+  type InsertCodeExecution,
+  type DataTable,
+  type InsertDataTable,
+  type Workflow,
+  type InsertWorkflow,
+  type Deployment,
+  type InsertDeployment
 } from "@shared/schema";
 
 export interface IStorage {
@@ -67,10 +76,16 @@ export class MemStorage implements IStorage {
   private files: Map<number, File> = new Map();
   private aiConversations: Map<number, AIConversation> = new Map();
   private codeExecutions: Map<number, CodeExecution> = new Map();
+  private dataTables: Map<number, DataTable> = new Map();
+  private workflows: Map<number, Workflow> = new Map();
+  private deployments: Map<number, Deployment> = new Map();
   private currentProjectId = 1;
   private currentFileId = 1;
   private currentConversationId = 1;
   private currentExecutionId = 1;
+  private currentDataTableId = 1;
+  private currentWorkflowId = 1;
+  private currentDeploymentId = 1;
 
   constructor() {
     // Initialize with default project
@@ -355,6 +370,124 @@ Happy coding!`,
     return Array.from(this.codeExecutions.values()).filter(
       exec => exec.projectId === projectId
     );
+  }
+
+  // Database Tables methods
+  async createDataTable(table: InsertDataTable): Promise<DataTable> {
+    const id = this.currentDataTableId++;
+    const newTable: DataTable = {
+      id,
+      ...table,
+      createdAt: new Date()
+    };
+    this.dataTables.set(id, newTable);
+    return newTable;
+  }
+
+  async getDataTable(id: number): Promise<DataTable | undefined> {
+    return this.dataTables.get(id);
+  }
+
+  async getDataTablesByProject(projectId: number): Promise<DataTable[]> {
+    return Array.from(this.dataTables.values()).filter(table => table.projectId === projectId);
+  }
+
+  async updateDataTable(id: number, table: Partial<InsertDataTable>): Promise<DataTable | undefined> {
+    const existing = this.dataTables.get(id);
+    if (!existing) return undefined;
+    
+    const updated: DataTable = {
+      ...existing,
+      ...table,
+      id: existing.id,
+      createdAt: existing.createdAt
+    };
+    this.dataTables.set(id, updated);
+    return updated;
+  }
+
+  async deleteDataTable(id: number): Promise<boolean> {
+    return this.dataTables.delete(id);
+  }
+
+  // Workflows methods
+  async createWorkflow(workflow: InsertWorkflow): Promise<Workflow> {
+    const id = this.currentWorkflowId++;
+    const newWorkflow: Workflow = {
+      id,
+      ...workflow,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.workflows.set(id, newWorkflow);
+    return newWorkflow;
+  }
+
+  async getWorkflow(id: number): Promise<Workflow | undefined> {
+    return this.workflows.get(id);
+  }
+
+  async getWorkflowsByProject(projectId: number): Promise<Workflow[]> {
+    return Array.from(this.workflows.values()).filter(workflow => workflow.projectId === projectId);
+  }
+
+  async updateWorkflow(id: number, workflow: Partial<InsertWorkflow>): Promise<Workflow | undefined> {
+    const existing = this.workflows.get(id);
+    if (!existing) return undefined;
+    
+    const updated: Workflow = {
+      ...existing,
+      ...workflow,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date()
+    };
+    this.workflows.set(id, updated);
+    return updated;
+  }
+
+  async deleteWorkflow(id: number): Promise<boolean> {
+    return this.workflows.delete(id);
+  }
+
+  // Deployments methods
+  async createDeployment(deployment: InsertDeployment): Promise<Deployment> {
+    const id = this.currentDeploymentId++;
+    const newDeployment: Deployment = {
+      id,
+      ...deployment,
+      createdAt: new Date()
+    };
+    this.deployments.set(id, newDeployment);
+    return newDeployment;
+  }
+
+  async getDeployment(id: number): Promise<Deployment | undefined> {
+    return this.deployments.get(id);
+  }
+
+  async getDeploymentsByProject(projectId: number): Promise<Deployment[]> {
+    return Array.from(this.deployments.values())
+      .filter(deployment => deployment.projectId === projectId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async updateDeployment(id: number, deployment: Partial<InsertDeployment>): Promise<Deployment | undefined> {
+    const existing = this.deployments.get(id);
+    if (!existing) return undefined;
+    
+    const updated: Deployment = {
+      ...existing,
+      ...deployment,
+      id: existing.id,
+      createdAt: existing.createdAt
+    };
+    this.deployments.set(id, updated);
+    return updated;
+  }
+
+  async deleteDeployment(id: number): Promise<boolean> {
+    return this.deployments.delete(id);
   }
 }
 
