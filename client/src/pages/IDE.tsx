@@ -350,7 +350,7 @@ export default function IDE() {
           
           {/* AI Assistant Tab */}
           <TabsContent value="ai" className="flex flex-1 m-0">
-            <div className="flex-1 flex">
+            <div className="w-96 border-r border-editor-border">
               <AIAssistant
                 projectId={currentProjectId}
                 isOpen={true}
@@ -358,6 +358,13 @@ export default function IDE() {
                 currentCode={currentCode}
                 currentLanguage={currentLanguage}
               />
+            </div>
+            <div className="flex-1 bg-editor-bg flex items-center justify-center">
+              <div className="text-center text-editor-text-dim">
+                <Bot className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                <h3 className="text-lg font-medium mb-2">AI Assistant Active</h3>
+                <p className="text-sm">The AI chat is ready on the left. Ask me anything!</p>
+              </div>
             </div>
           </TabsContent>
           
