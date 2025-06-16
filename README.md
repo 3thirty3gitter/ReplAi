@@ -32,19 +32,33 @@ A revolutionary platform that enables anyone to build complete, production-ready
 - **Auto-generated Forms**: Create forms from database schemas
 
 ### Project Templates
-Six production-ready templates:
-1. **Personal Portfolio** (Beginner, 5 min)
-   - Project showcase, contact forms, about sections
-2. **Business Landing Page** (Beginner, 10 min)
-   - Lead capture, service highlights, testimonials
-3. **Blog Platform** (Intermediate, 20 min)
-   - Content management, comment system, categories
-4. **Event Booking System** (Advanced, 30 min)
-   - Calendar integration, ticket sales, payment processing
-5. **Restaurant Website** (Intermediate, 15 min)
-   - Digital menus, reservations, location info
-6. **Online Course Platform** (Advanced, 25 min)
-   - Video lessons, progress tracking, certificates
+20+ production-ready templates across multiple categories:
+
+**Business & Enterprise**
+- **CRM System** (Advanced, 30-40 min) - Contact management, sales pipeline, reporting
+- **Project Manager** (Advanced, 25-35 min) - Kanban boards, task assignment, team collaboration
+- **Inventory Manager** (Advanced, 25-35 min) - Stock tracking, purchase orders, alerts
+- **Analytics Dashboard** (Advanced, 20-30 min) - Interactive charts, real-time data visualization
+
+**E-commerce & Marketing**
+- **E-commerce Store** (Advanced, 18-25 min) - Product catalog, shopping cart, checkout
+- **Business Landing Page** (Beginner, 10 min) - Lead capture, service highlights, testimonials
+
+**Content & Media**
+- **Blog & CMS** (Advanced, 25-35 min) - Rich text editor, SEO optimization, admin dashboard
+- **Social Network** (Advanced, 35-45 min) - User profiles, messaging, activity feeds
+- **Learning Platform** (Advanced, 30-40 min) - Course creation, progress tracking, certificates
+
+**Tools & Utilities**
+- **Personal Portfolio** (Beginner, 5 min) - Project showcase, contact forms
+- **Todo App** (Beginner, 5-10 min) - Task management with drag & drop
+- **Calculator** (Beginner, 3-8 min) - Scientific calculator with history
+- **Photo Gallery** (Intermediate, 8-12 min) - Image upload, filters, slideshow
+- **Music Player** (Advanced, 12-18 min) - Playlists, visualizer, modern controls
+
+**Communication & Social**
+- **Chat Application** (Advanced, 12-18 min) - Real-time messaging, file sharing
+- **Event Calendar** (Intermediate, 10-15 min) - Event scheduling, reminders
 
 ### Deployment Center
 - **One-Click Deployment**: Automatic build and deployment process

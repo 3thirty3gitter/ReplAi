@@ -9,7 +9,11 @@ import {
   Minimize2, 
   Terminal as TerminalIcon,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Play,
+  Clock,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
 
 interface TerminalProps {
@@ -51,8 +55,18 @@ export function Terminal({ projectId, isMaximized, onToggleMaximize }: TerminalP
   const [isExecuting, setIsExecuting] = useState(false);
   const [problems, setProblems] = useState<string[]>([]);
   const [outputs, setOutputs] = useState<string[]>([]);
+  const [selectedLanguage, setSelectedLanguage] = useState('javascript');
+  const [codeInput, setCodeInput] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
+
+  const supportedLanguages = [
+    { id: 'javascript', name: 'JavaScript', example: 'console.log("Hello World!");' },
+    { id: 'python', name: 'Python', example: 'print("Hello World!")' },
+    { id: 'typescript', name: 'TypeScript', example: 'console.log("Hello World!");' },
+    { id: 'html', name: 'HTML', example: '<h1>Hello World!</h1>' },
+    { id: 'css', name: 'CSS', example: 'body { color: blue; }' }
+  ];
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -223,6 +237,15 @@ export function Terminal({ projectId, isMaximized, onToggleMaximize }: TerminalP
         </Tabs>
         
         <div className="flex items-center space-x-2">
+          <select
+            value={selectedLanguage}
+            onChange={(e) => setSelectedLanguage(e.target.value)}
+            className="text-xs bg-editor-surface border border-editor-border rounded px-2 py-1 text-editor-text"
+          >
+            {supportedLanguages.map(lang => (
+              <option key={lang.id} value={lang.id}>{lang.name}</option>
+            ))}
+          </select>
           <Button
             variant="ghost"
             size="sm"

@@ -140,6 +140,76 @@ const templates: Template[] = [
     prompt: 'Create a simple but engaging game (like Snake, Tetris, or Memory) with score tracking, levels, high scores, and smooth animations.',
     difficulty: 'Advanced',
     estimatedTime: '15-25 min'
+  },
+  {
+    id: 'data-dashboard',
+    name: 'Analytics Dashboard',
+    description: 'Data visualization with interactive charts and metrics',
+    icon: BarChart3,
+    tags: ['Analytics', 'Charts', 'Data'],
+    prompt: 'Build a comprehensive analytics dashboard with interactive charts, real-time data visualization, filtering options, and export capabilities. Include line charts, bar charts, pie charts, and key metrics.',
+    difficulty: 'Advanced',
+    estimatedTime: '20-30 min'
+  },
+  {
+    id: 'blog-cms',
+    name: 'Blog & CMS',
+    description: 'Content management system with rich text editor',
+    icon: FileText,
+    tags: ['CMS', 'Blog', 'Content'],
+    prompt: 'Create a complete blog platform with rich text editor, post management, categories, tags, search functionality, and SEO optimization. Include admin dashboard and comment system.',
+    difficulty: 'Advanced',
+    estimatedTime: '25-35 min'
+  },
+  {
+    id: 'crm-system',
+    name: 'CRM System',
+    description: 'Customer relationship management with pipeline tracking',
+    icon: Building2,
+    tags: ['CRM', 'Business', 'Sales'],
+    prompt: 'Develop a CRM system with contact management, sales pipeline, task scheduling, email integration, and reporting. Include lead tracking and conversion analytics.',
+    difficulty: 'Advanced',
+    estimatedTime: '30-40 min'
+  },
+  {
+    id: 'project-management',
+    name: 'Project Manager',
+    description: 'Team collaboration with task boards and tracking',
+    icon: Briefcase,
+    tags: ['Projects', 'Teams', 'Tasks'],
+    prompt: 'Build a project management tool with Kanban boards, task assignment, time tracking, file sharing, and team collaboration. Include Gantt charts and progress reports.',
+    difficulty: 'Advanced',
+    estimatedTime: '25-35 min'
+  },
+  {
+    id: 'social-platform',
+    name: 'Social Network',
+    description: 'Social platform with posts, messaging, and profiles',
+    icon: Users,
+    tags: ['Social', 'Messaging', 'Community'],
+    prompt: 'Create a social networking platform with user profiles, posts, comments, direct messaging, friend connections, and activity feeds. Include privacy settings and notifications.',
+    difficulty: 'Advanced',
+    estimatedTime: '35-45 min'
+  },
+  {
+    id: 'learning-platform',
+    name: 'Learning Platform',
+    description: 'Online education with courses and progress tracking',
+    icon: FileText,
+    tags: ['Education', 'Courses', 'Learning'],
+    prompt: 'Build an online learning platform with course creation, video lessons, quizzes, progress tracking, and certificates. Include student dashboard and instructor tools.',
+    difficulty: 'Advanced',
+    estimatedTime: '30-40 min'
+  },
+  {
+    id: 'inventory-system',
+    name: 'Inventory Manager',
+    description: 'Stock management with tracking and alerts',
+    icon: Database,
+    tags: ['Inventory', 'Stock', 'Management'],
+    prompt: 'Develop an inventory management system with product tracking, stock levels, purchase orders, supplier management, and low-stock alerts. Include barcode scanning simulation.',
+    difficulty: 'Advanced',
+    estimatedTime: '25-35 min'
   }
 ];
 
