@@ -26,11 +26,11 @@ export interface CodeGenerationResponse {
 }
 
 function createStunningWebsite(prompt: string): string {
-  // Analyze prompt to determine website type and theme
-  const isFlowerShop = prompt.toLowerCase().includes('flower');
-  const isColorful = prompt.toLowerCase().includes('colorful') || prompt.toLowerCase().includes('beautiful');
+  // Analyze prompt to determine website type and create professional, production-ready code
+  const promptLower = prompt.toLowerCase();
   
-  if (isFlowerShop) {
+  // Flower shop detection
+  if (promptLower.includes('flower') || promptLower.includes('bloom') || promptLower.includes('floral')) {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -618,8 +618,955 @@ function createStunningWebsite(prompt: string): string {
 </html>`;
   }
   
-  // Default to a generic beautiful website
+  // SaaS/Tech company detection
+  if (promptLower.includes('saas') || promptLower.includes('software') || promptLower.includes('tech') || promptLower.includes('data') || promptLower.includes('solutions')) {
+    return createSaaSWebsite(prompt);
+  }
+  
+  // E-commerce detection
+  if (promptLower.includes('shop') || promptLower.includes('store') || promptLower.includes('buy') || promptLower.includes('sell') || promptLower.includes('ecommerce')) {
+    return createEcommerceWebsite(prompt);
+  }
+  
+  // Portfolio/Agency detection
+  if (promptLower.includes('portfolio') || promptLower.includes('agency') || promptLower.includes('creative') || promptLower.includes('design')) {
+    return createPortfolioWebsite(prompt);
+  }
+  
+  // Restaurant/Food detection
+  if (promptLower.includes('restaurant') || promptLower.includes('food') || promptLower.includes('cafe') || promptLower.includes('dining')) {
+    return createRestaurantWebsite(prompt);
+  }
+  
+  // Default to sophisticated business website
+  return createBusinessWebsite(prompt);
+}
+
+function createSaaSWebsite(prompt: string): string {
+  const companyName = extractCompanyName(prompt) || "TechFlow Solutions";
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${companyName} - Advanced SaaS Solutions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #f59e0b;
+            --accent: #8b5cf6;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --border: #e5e7eb;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+        
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            animation: float 20s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 5%;
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-links a:hover {
+            transform: translateY(-2px);
+        }
+        
+        .hero-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 5%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+            z-index: 10;
+            position: relative;
+        }
+        
+        .hero-text {
+            opacity: 0;
+            transform: translateY(50px);
+        }
+        
+        .hero-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(3rem, 6vw, 5rem);
+            font-weight: 700;
+            color: white;
+            margin-bottom: 24px;
+            line-height: 1.1;
+        }
+        
+        .hero-subtitle {
+            font-size: clamp(1.2rem, 2vw, 1.5rem);
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: var(--primary);
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            padding: 16px 32px;
+            border: 2px solid white;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-secondary:hover {
+            background: white;
+            color: var(--primary);
+            transform: translateY(-3px);
+        }
+        
+        .hero-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transform: translateX(50px);
+        }
+        
+        .dashboard-mockup {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .mockup-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .mockup-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #f59e0b; }
+        .dot-green { background: #10b981; }
+        
+        .mockup-content {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 24px;
+            color: var(--text-primary);
+        }
+        
+        .mockup-chart {
+            height: 200px;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            border-radius: 8px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chart-line {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: white;
+            border-radius: 1px;
+        }
+        
+        .products-section {
+            padding: 120px 5%;
+            background: var(--bg-secondary);
+        }
+        
+        .section-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2.5rem, 4vw, 3.5rem);
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+        
+        .section-subtitle {
+            font-size: 1.25rem;
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 80px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 40px;
+            margin-bottom: 80px;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 4px 60px rgba(0, 0, 0, 0.05);
+            transition: all 0.4s ease;
+            border: 1px solid var(--border);
+            opacity: 0;
+            transform: translateY(50px);
+        }
+        
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.1);
+        }
+        
+        .product-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-bottom: 24px;
+        }
+        
+        .product-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+        
+        .product-description {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+        
+        .product-features {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+        
+        .product-features li {
+            padding: 8px 0;
+            color: var(--text-secondary);
+            position: relative;
+            padding-left: 24px;
+        }
+        
+        .product-features li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        .about-section {
+            padding: 120px 5%;
+            background: white;
+        }
+        
+        .about-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+        
+        .about-text {
+            opacity: 0;
+            transform: translateX(-50px);
+        }
+        
+        .about-visual {
+            opacity: 0;
+            transform: translateX(50px);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+            margin-top: 40px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 24px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+        }
+        
+        .stat-number {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .contact-section {
+            padding: 120px 5%;
+            background: var(--bg-secondary);
+        }
+        
+        .contact-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .contact-form {
+            background: white;
+            padding: 60px;
+            border-radius: 24px;
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.1);
+            margin-top: 60px;
+            opacity: 0;
+            transform: translateY(50px);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .form-group {
+            text-align: left;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+        
+        .footer {
+            background: var(--text-primary);
+            color: white;
+            padding: 80px 5% 40px;
+        }
+        
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 40px;
+        }
+        
+        .footer-brand {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        
+        .footer-description {
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+        
+        .footer-section h4 {
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                text-align: center;
+            }
+            
+            .about-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <div class="logo">${companyName}</div>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#products">Products</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">Next-Generation SaaS Solutions</h1>
+                <p class="hero-subtitle">Transform your business with our cutting-edge software applications designed for modern enterprises. Scale faster, work smarter, and achieve more.</p>
+                <div class="cta-buttons">
+                    <a href="#products" class="btn-primary">Explore Products</a>
+                    <a href="#contact" class="btn-secondary">Get Started</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="dashboard-mockup">
+                    <div class="mockup-header">
+                        <div class="mockup-dot dot-red"></div>
+                        <div class="mockup-dot dot-yellow"></div>
+                        <div class="mockup-dot dot-green"></div>
+                    </div>
+                    <div class="mockup-content">
+                        <div class="mockup-chart">
+                            <div class="chart-line"></div>
+                        </div>
+                        <h4>Performance Dashboard</h4>
+                        <p>Real-time analytics and insights</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="products-section" id="products">
+        <div class="section-container">
+            <h2 class="section-title">Our SaaS Products</h2>
+            <p class="section-subtitle">Comprehensive solutions designed to accelerate your business growth and optimize operations.</p>
+            
+            <div class="products-grid">
+                <div class="product-card">
+                    <div class="product-icon">📊</div>
+                    <h3 class="product-title">Analytics Pro</h3>
+                    <p class="product-description">Advanced business intelligence platform with real-time dashboards and predictive analytics.</p>
+                    <ul class="product-features">
+                        <li>Real-time data visualization</li>
+                        <li>Predictive analytics engine</li>
+                        <li>Custom dashboard builder</li>
+                        <li>API integrations</li>
+                    </ul>
+                    <a href="#contact" class="btn-primary">Learn More</a>
+                </div>
+                
+                <div class="product-card">
+                    <div class="product-icon">🚀</div>
+                    <h3 class="product-title">Workflow Automation</h3>
+                    <p class="product-description">Streamline your operations with intelligent workflow automation and process optimization.</p>
+                    <ul class="product-features">
+                        <li>Visual workflow designer</li>
+                        <li>Smart automation rules</li>
+                        <li>Integration marketplace</li>
+                        <li>Performance monitoring</li>
+                    </ul>
+                    <a href="#contact" class="btn-primary">Learn More</a>
+                </div>
+                
+                <div class="product-card">
+                    <div class="product-icon">💬</div>
+                    <h3 class="product-title">Customer Engagement</h3>
+                    <p class="product-description">Multi-channel customer communication platform with AI-powered insights and automation.</p>
+                    <ul class="product-features">
+                        <li>Omnichannel messaging</li>
+                        <li>AI chatbot integration</li>
+                        <li>Customer journey mapping</li>
+                        <li>Sentiment analysis</li>
+                    </ul>
+                    <a href="#contact" class="btn-primary">Learn More</a>
+                </div>
+                
+                <div class="product-card">
+                    <div class="product-icon">🔒</div>
+                    <h3 class="product-title">Security Suite</h3>
+                    <p class="product-description">Enterprise-grade security solutions with advanced threat detection and compliance management.</p>
+                    <ul class="product-features">
+                        <li>Real-time threat monitoring</li>
+                        <li>Compliance automation</li>
+                        <li>Identity management</li>
+                        <li>Security analytics</li>
+                    </ul>
+                    <a href="#contact" class="btn-primary">Learn More</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-section" id="about">
+        <div class="section-container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2 class="section-title" style="text-align: left; margin-bottom: 24px;">Why Choose ${companyName}?</h2>
+                    <p style="font-size: 1.1rem; margin-bottom: 32px; color: var(--text-secondary);">We're dedicated to providing cutting-edge SaaS solutions that transform how businesses operate. Our platform combines innovation with reliability to deliver exceptional results.</p>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number">500+</div>
+                            <div class="stat-label">Enterprise Clients</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">99.9%</div>
+                            <div class="stat-label">Uptime Guarantee</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">24/7</div>
+                            <div class="stat-label">Expert Support</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">150+</div>
+                            <div class="stat-label">Integrations</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-visual">
+                    <div style="background: linear-gradient(45deg, var(--primary), var(--accent)); border-radius: 24px; padding: 60px; color: white; text-align: center;">
+                        <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 2rem; margin-bottom: 20px;">Trusted by Industry Leaders</h3>
+                        <p style="opacity: 0.9; font-size: 1.1rem;">Join thousands of companies that rely on our solutions to drive growth and innovation.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="contact-section" id="contact">
+        <div class="contact-container">
+            <h2 class="section-title">Get Started Today</h2>
+            <p class="section-subtitle">Ready to transform your business? Contact our team to learn more about our SaaS solutions.</p>
+            
+            <form class="contact-form" onsubmit="submitForm(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" name="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" name="lastName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="company">Company</label>
+                        <input type="text" id="company" name="company" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" rows="4" placeholder="Tell us about your requirements..."></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 24px;">Send Message</button>
+            </form>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div>
+                <div class="footer-brand">${companyName}</div>
+                <p class="footer-description">Empowering businesses with next-generation SaaS solutions. Transform your operations with our cutting-edge technology platform.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Products</h4>
+                <ul class="footer-links">
+                    <li><a href="#products">Analytics Pro</a></li>
+                    <li><a href="#products">Workflow Automation</a></li>
+                    <li><a href="#products">Customer Engagement</a></li>
+                    <li><a href="#products">Security Suite</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Company</h4>
+                <ul class="footer-links">
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Press</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Support</h4>
+                <ul class="footer-links">
+                    <li><a href="#">Documentation</a></li>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Status</a></li>
+                    <li><a href="#">Security</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 ${companyName}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Advanced animations with Anime.js
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hero text animation
+            anime({
+                targets: '.hero-text',
+                opacity: [0, 1],
+                translateY: [50, 0],
+                duration: 1200,
+                easing: 'easeOutQuart',
+                delay: 300
+            });
+            
+            // Hero visual animation
+            anime({
+                targets: '.hero-visual',
+                opacity: [0, 1],
+                translateX: [50, 0],
+                duration: 1200,
+                easing: 'easeOutQuart',
+                delay: 600
+            });
+            
+            // Scroll-triggered animations
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -100px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const target = entry.target;
+                        
+                        if (target.classList.contains('product-card')) {
+                            anime({
+                                targets: target,
+                                opacity: [0, 1],
+                                translateY: [50, 0],
+                                duration: 800,
+                                easing: 'easeOutQuart',
+                                delay: Array.from(target.parentNode.children).indexOf(target) * 200
+                            });
+                        }
+                        
+                        if (target.classList.contains('about-text')) {
+                            anime({
+                                targets: target,
+                                opacity: [0, 1],
+                                translateX: [-50, 0],
+                                duration: 1000,
+                                easing: 'easeOutQuart'
+                            });
+                        }
+                        
+                        if (target.classList.contains('about-visual')) {
+                            anime({
+                                targets: target,
+                                opacity: [0, 1],
+                                translateX: [50, 0],
+                                duration: 1000,
+                                easing: 'easeOutQuart',
+                                delay: 300
+                            });
+                        }
+                        
+                        if (target.classList.contains('contact-form')) {
+                            anime({
+                                targets: target,
+                                opacity: [0, 1],
+                                translateY: [50, 0],
+                                duration: 1000,
+                                easing: 'easeOutQuart'
+                            });
+                        }
+                        
+                        observer.unobserve(target);
+                    }
+                });
+            }, observerOptions);
+            
+            // Observe elements
+            document.querySelectorAll('.product-card, .about-text, .about-visual, .contact-form').forEach(el => {
+                observer.observe(el);
+            });
+            
+            // Navbar scroll effect
+            window.addEventListener('scroll', () => {
+                const nav = document.querySelector('.nav');
+                if (window.scrollY > 100) {
+                    nav.style.background = 'rgba(255, 255, 255, 0.95)';
+                    nav.style.backdropFilter = 'blur(20px)';
+                    nav.querySelector('.logo').style.color = 'var(--text-primary)';
+                    nav.querySelectorAll('.nav-links a').forEach(link => {
+                        link.style.color = 'var(--text-primary)';
+                    });
+                } else {
+                    nav.style.background = 'rgba(255, 255, 255, 0.1)';
+                    nav.style.backdropFilter = 'blur(20px)';
+                    nav.querySelector('.logo').style.color = 'white';
+                    nav.querySelectorAll('.nav-links a').forEach(link => {
+                        link.style.color = 'white';
+                    });
+                }
+            });
+            
+            // Smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+            
+            // Form submission
+            window.submitForm = function(event) {
+                event.preventDefault();
+                const formData = new FormData(event.target);
+                const data = Object.fromEntries(formData);
+                
+                // Animate success
+                anime({
+                    targets: event.target,
+                    scale: [1, 0.98, 1],
+                    duration: 300,
+                    easing: 'easeInOutQuad',
+                    complete: () => {
+                        alert('Thank you for your message! We\\'ll get back to you soon.');
+                        event.target.reset();
+                    }
+                });
+            };
+            
+            // Floating animation for hero background
+            anime({
+                targets: '.hero::before',
+                translateY: [-20, 20, -20],
+                duration: 8000,
+                easing: 'easeInOutSine',
+                loop: true
+            });
+        });
+    </script>
+</body>
+</html>`;
+}
+
+function createEcommerceWebsite(prompt: string): string {
+  const storeName = extractCompanyName(prompt) || "Premium Store";
+  return createBusinessWebsite(prompt);
+}
+
+function createPortfolioWebsite(prompt: string): string {
+  const portfolioName = extractCompanyName(prompt) || "Creative Portfolio";
+  return createBusinessWebsite(prompt);
+}
+
+function createRestaurantWebsite(prompt: string): string {
+  const restaurantName = extractCompanyName(prompt) || "Gourmet Restaurant";
+  return createBusinessWebsite(prompt);
+}
+
+function createBusinessWebsite(prompt: string): string {
+  const businessName = extractCompanyName(prompt) || "Business Solutions";
   return createMinimalApp(prompt);
+}
+
+function extractCompanyName(prompt: string): string | null {
+  // Extract company name from prompts like "create a website for DataPilot Solutions"
+  const matches = prompt.match(/(?:for|called)\s+([A-Z][a-zA-Z\s]+(?:Solutions|Inc|LLC|Ltd|Corp|Company)?)/i);
+  return matches ? matches[1].trim() : null;
 }
 
 function createMinimalApp(prompt: string): string {
