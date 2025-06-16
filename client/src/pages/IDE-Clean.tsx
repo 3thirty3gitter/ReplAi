@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,7 +11,8 @@ import {
   Bot,
   FolderTree,
   Terminal as TerminalIcon,
-  ChevronLeft
+  ChevronLeft,
+  GripVertical
 } from "lucide-react";
 import { CodeEditor } from "@/components/CodeEditor";
 import { AIAssistant } from "@/components/AIAssistant";
@@ -38,9 +39,45 @@ export default function IDE() {
   const [buildingSteps, setBuildingSteps] = useState<string[]>([]);
   const [currentBuildStep, setCurrentBuildStep] = useState(0);
   const [generatedAppFiles, setGeneratedAppFiles] = useState<Array<{name: string, content: string, language: string, path: string}>>([]);
+  
+  // Resizable AI panel states
+  const [aiPanelWidth, setAiPanelWidth] = useState(384);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<HTMLDivElement>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Handle resizing AI panel
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const newWidth = e.clientX;
+    if (newWidth >= 300 && newWidth <= 600) {
+      setAiPanelWidth(newWidth);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging]);
 
   // Get all projects
   const { data: projects = [] } = useQuery<Project[]>({
@@ -127,20 +164,11 @@ export default function IDE() {
 
   return (
     <div className="flex h-screen bg-editor-bg text-editor-text">
-      {/* Left Side - AI Assistant (Fixed Width) */}
-      <div className="w-96 border-r border-editor-border bg-editor-surface flex flex-col">
-        {/* AI Assistant Header */}
-        <div className="h-12 bg-editor-surface border-b border-editor-border flex items-center px-4 justify-between">
-          <div className="flex items-center space-x-2">
-            <Bot className="h-5 w-5 text-editor-primary" />
-            <h2 className="text-sm font-semibold text-editor-text">AI Assistant</h2>
-          </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-xs text-editor-text-dim">Ready</span>
-          </div>
-        </div>
-        
+      {/* Left Side - AI Assistant (Resizable) */}
+      <div 
+        className="border-r border-editor-border bg-editor-surface flex flex-col relative"
+        style={{ width: `${aiPanelWidth}px` }}
+      >
         {/* AI Assistant Content */}
         <div className="flex-1">
           <AIAssistant
@@ -152,6 +180,15 @@ export default function IDE() {
             onAppBuilding={handleAppBuilding}
             onAppGenerated={handleAppGenerated}
           />
+        </div>
+        
+        {/* Resize Handle */}
+        <div
+          className="absolute top-0 right-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-editor-primary hover:bg-opacity-50 transition-colors flex items-center justify-center group"
+          onMouseDown={handleMouseDown}
+          ref={dragRef}
+        >
+          <div className="w-1 h-8 bg-editor-border group-hover:bg-editor-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
       </div>
       
