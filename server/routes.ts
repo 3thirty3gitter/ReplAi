@@ -280,6 +280,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/ai/chat', async (req, res) => {
+    try {
+      const { message, code, language, projectId } = z.object({
+        message: z.string(),
+        code: z.string().optional(),
+        language: z.string().optional(),
+        projectId: z.number()
+      }).parse(req.body);
+
+      const request = {
+        code: code || '',
+        language: language || 'javascript',
+        prompt: message,
+        context: `This is a chat message from the user in project ${projectId}. Please provide helpful coding assistance.`
+      };
+
+      const response = await getCodeAssistance(request);
+      res.json({ message: response.suggestion });
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  });
+
   // Code Execution API
   app.get('/api/projects/:projectId/executions', async (req, res) => {
     try {

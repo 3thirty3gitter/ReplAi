@@ -24,7 +24,8 @@ import {
   Palette,
   Settings,
   HelpCircle,
-  Bot
+  Bot,
+  Send
 } from "lucide-react";
 import type { Project, File } from "@shared/schema";
 
@@ -37,6 +38,9 @@ export default function IDE() {
   const [pendingChanges, setPendingChanges] = useState<Map<number, string>>(new Map());
   const [activeTab, setActiveTab] = useState<string>('code');
   const [showTemplates, setShowTemplates] = useState(false);
+  const [aiMessages, setAIMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: number}>>([]);
+  const [aiInput, setAIInput] = useState('');
+  const [isAILoading, setIsAILoading] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -184,6 +188,49 @@ export default function IDE() {
   const activeFile = openFiles.find(f => f.id === activeFileId);
   const currentCode = activeFile ? (pendingChanges.get(activeFile.id) || activeFile.content) : '';
   const currentLanguage = activeFile?.language || 'javascript';
+
+  // AI Chat handler
+  const handleAISubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!aiInput.trim() || isAILoading) return;
+
+    const userMessage = {
+      role: 'user' as const,
+      content: aiInput,
+      timestamp: Date.now()
+    };
+
+    setAIMessages(prev => [...prev, userMessage]);
+    setAIInput('');
+    setIsAILoading(true);
+
+    try {
+      const response = await apiRequest('POST', '/api/ai/chat', {
+        message: aiInput,
+        code: currentCode,
+        language: currentLanguage,
+        projectId: currentProjectId
+      });
+
+      const data = await response.json();
+      const aiResponse = {
+        role: 'assistant' as const,
+        content: data.message || 'I received your message but had trouble generating a response.',
+        timestamp: Date.now()
+      };
+
+      setAIMessages(prev => [...prev, aiResponse]);
+    } catch (error) {
+      const errorMessage = {
+        role: 'assistant' as const,
+        content: 'Sorry, I encountered an error. Please make sure the OpenAI API key is configured.',
+        timestamp: Date.now()
+      };
+      setAIMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsAILoading(false);
+    }
+  };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -361,33 +408,68 @@ export default function IDE() {
                 </div>
                 
                 <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                  <div className="flex-1 overflow-y-auto p-4">
+                  <div className="flex-1 overflow-y-auto p-4" id="chat-messages">
                     <div className="space-y-4">
-                      <div className="text-center">
-                        <Bot className="h-12 w-12 mx-auto mb-3 text-editor-primary" />
-                        <p className="text-sm text-editor-text">Hello! I'm your AI coding assistant.</p>
-                        <p className="text-sm text-editor-text-dim">I can help you with:</p>
-                        <ul className="text-xs text-editor-text-dim mt-2 space-y-1">
-                          <li>• Code generation</li>
-                          <li>• Debugging</li>
-                          <li>• Code explanations</li>
-                          <li>• Best practices</li>
-                        </ul>
-                      </div>
+                      {aiMessages.length === 0 ? (
+                        <div className="text-center">
+                          <Bot className="h-12 w-12 mx-auto mb-3 text-editor-primary" />
+                          <p className="text-sm text-editor-text">Hello! I'm your AI coding assistant.</p>
+                          <p className="text-sm text-editor-text-dim">I can help you with:</p>
+                          <ul className="text-xs text-editor-text-dim mt-2 space-y-1">
+                            <li>• Code generation</li>
+                            <li>• Debugging</li>
+                            <li>• Code explanations</li>
+                            <li>• Best practices</li>
+                          </ul>
+                        </div>
+                      ) : (
+                        aiMessages.map((msg, index) => (
+                          <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[80%] rounded-lg p-3 ${
+                              msg.role === 'user' 
+                                ? 'bg-editor-primary text-white' 
+                                : 'bg-editor-bg border border-editor-border text-editor-text'
+                            }`}>
+                              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                              <p className="text-xs opacity-70 mt-1">
+                                {new Date(msg.timestamp).toLocaleTimeString()}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      {isAILoading && (
+                        <div className="flex justify-start">
+                          <div className="bg-editor-bg border border-editor-border rounded-lg p-3">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-2 h-2 bg-editor-primary rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-editor-primary rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                              <div className="w-2 h-2 bg-editor-primary rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                   
                   <div className="p-4 border-t border-editor-border">
-                    <div className="flex space-x-2">
+                    <form onSubmit={handleAISubmit} className="flex space-x-2">
                       <input
                         type="text"
+                        value={aiInput}
+                        onChange={(e) => setAIInput(e.target.value)}
                         placeholder="Ask AI for help..."
                         className="flex-1 px-3 py-2 text-sm bg-editor-bg border border-editor-border rounded-md text-editor-text placeholder:text-editor-text-dim focus:outline-none focus:ring-2 focus:ring-editor-primary"
+                        disabled={isAILoading}
                       />
-                      <button className="px-3 py-2 bg-editor-primary text-white rounded-md hover:bg-editor-primary/80 transition-colors">
+                      <button 
+                        type="submit"
+                        disabled={isAILoading || !aiInput.trim()}
+                        className="px-3 py-2 bg-editor-primary text-white rounded-md hover:bg-editor-primary/80 transition-colors disabled:opacity-50"
+                      >
                         <Send className="h-4 w-4" />
                       </button>
-                    </div>
+                    </form>
                     <p className="text-xs text-editor-text-dim mt-2">Press Enter to send</p>
                   </div>
                 </div>
