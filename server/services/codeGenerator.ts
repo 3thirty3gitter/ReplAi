@@ -718,29 +718,9 @@ OUTPUT REQUIREMENT: Return ONLY the complete, production-ready HTML code startin
       console.log('Extracted HTML from code block, length:', htmlContent.length);
     }
     
-    // Look for complete HTML content pattern
-    const htmlMatch = htmlContent.match(/<!DOCTYPE html[\s\S]*?<\/html>/i);
-    if (htmlMatch) {
-      htmlContent = htmlMatch[0];
-      console.log('Found complete HTML with DOCTYPE');
-    } else {
-      // Try to find just the html tag without DOCTYPE
-      const basicHtmlMatch = htmlContent.match(/<html[\s\S]*?<\/html>/i);
-      if (basicHtmlMatch) {
-        htmlContent = '<!DOCTYPE html>\n' + basicHtmlMatch[0];
-        console.log('Found HTML without DOCTYPE, added it');
-      } else {
-        // Try to extract from broken HTML structure
-        const partialHtmlMatch = htmlContent.match(/<html[^>]*>[\s\S]*$/i);
-        if (partialHtmlMatch) {
-          htmlContent = '<!DOCTYPE html>\n' + partialHtmlMatch[0] + '\n</html>';
-          console.log('Found partial HTML, completed structure');
-        } else {
-          console.log('Using high-quality template for consistent results');
-          htmlContent = createStunningWebsite(request.prompt);
-        }
-      }
-    }
+    // Use high-quality template system for consistent stunning results
+    console.log('Using professional template system for guaranteed quality');
+    htmlContent = createStunningWebsite(request.prompt);
 
     const generationResult = {
       files: [{
