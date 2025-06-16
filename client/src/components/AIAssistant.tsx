@@ -70,10 +70,10 @@ export function AIAssistant({
     onError: (error: any) => {
       let errorMessage = 'Failed to get AI response';
       
-      if (error.message?.includes('OpenAI API key is not configured')) {
-        errorMessage = 'OpenAI API key is not configured. Please add your API key in Settings.';
-      } else if (error.message?.includes('Invalid OpenAI API key')) {
-        errorMessage = 'Invalid OpenAI API key. Please check your API key in Settings.';
+      if (error.message?.includes('PERPLEXITY_API_KEY')) {
+        errorMessage = 'Perplexity API key is not configured. Please add your API key in Settings.';
+      } else if (error.message?.includes('Invalid Perplexity API key')) {
+        errorMessage = 'Invalid Perplexity API key. Please check your API key in Settings.';
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -139,7 +139,7 @@ export function AIAssistant({
               <Alert className="mt-4 border-editor-border bg-editor-bg">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription className="text-editor-text-dim">
-                  Make sure to configure your OpenAI API key in Settings for AI features to work.
+                  Make sure to configure your Perplexity API key in Settings for AI features to work.
                 </AlertDescription>
               </Alert>
             </div>
