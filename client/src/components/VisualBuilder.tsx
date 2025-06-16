@@ -319,6 +319,43 @@ function DroppedComponentRenderer({ component, isSelected, onSelect, onUpdate, o
           </div>
         );
       
+      case 'textarea':
+        return (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">{component.props.label}</label>
+            <textarea
+              placeholder={component.props.placeholder}
+              rows={component.props.rows}
+              className="w-full px-3 py-2 border border-gray-300 rounded resize-none"
+            />
+          </div>
+        );
+      
+      case 'select':
+        return (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">{component.props.label}</label>
+            <select className="w-full px-3 py-2 border border-gray-300 rounded">
+              {component.props.options.map((option: string, index: number) => (
+                <option key={index} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+        );
+      
+      case 'checkbox':
+        return (
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={component.props.checked}
+              className="w-4 h-4 text-blue-600"
+              readOnly
+            />
+            <label className="text-sm">{component.props.label}</label>
+          </div>
+        );
+      
       case 'container':
         return (
           <div
@@ -334,6 +371,55 @@ function DroppedComponentRenderer({ component, isSelected, onSelect, onUpdate, o
             }}
           >
             <span className="text-gray-500">Container - Drop components here</span>
+          </div>
+        );
+      
+      case 'grid':
+        return (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${component.props.columns}, 1fr)`,
+              gap: component.props.gap,
+              padding: component.props.padding,
+              border: '2px dashed #ddd',
+              borderRadius: '8px',
+              minHeight: '150px'
+            }}
+          >
+            {Array.from({ length: component.props.columns }).map((_, index) => (
+              <div key={index} className="border border-gray-200 rounded p-4 text-center text-gray-400">
+                Grid Item {index + 1}
+              </div>
+            ))}
+          </div>
+        );
+      
+      case 'table':
+        return (
+          <div className="overflow-hidden border border-gray-300 rounded">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  {component.props.headers.map((header: string, index: number) => (
+                    <th key={index} className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {component.props.rows.map((row: string[], rowIndex: number) => (
+                  <tr key={rowIndex} className="border-t border-gray-200">
+                    {row.map((cell: string, cellIndex: number) => (
+                      <td key={cellIndex} className="px-4 py-2 text-sm text-gray-600">
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         );
       
@@ -527,6 +613,191 @@ function PropertyPanel({ component, onUpdate }: {
               <Input
                 value={component.props.height}
                 onChange={(e) => updateProp('height', e.target.value)}
+              />
+            </div>
+          </div>
+        );
+      
+      case 'input':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Label</Label>
+              <Input
+                value={component.props.label}
+                onChange={(e) => updateProp('label', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Placeholder</Label>
+              <Input
+                value={component.props.placeholder}
+                onChange={(e) => updateProp('placeholder', e.target.value)}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={component.props.required}
+                onCheckedChange={(checked) => updateProp('required', checked)}
+              />
+              <Label>Required</Label>
+            </div>
+          </div>
+        );
+      
+      case 'textarea':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Label</Label>
+              <Input
+                value={component.props.label}
+                onChange={(e) => updateProp('label', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Placeholder</Label>
+              <Input
+                value={component.props.placeholder}
+                onChange={(e) => updateProp('placeholder', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Rows</Label>
+              <Input
+                type="number"
+                value={component.props.rows}
+                onChange={(e) => updateProp('rows', parseInt(e.target.value))}
+                min="2"
+                max="10"
+              />
+            </div>
+          </div>
+        );
+      
+      case 'select':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Label</Label>
+              <Input
+                value={component.props.label}
+                onChange={(e) => updateProp('label', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Options (one per line)</Label>
+              <Textarea
+                value={component.props.options.join('\n')}
+                onChange={(e) => updateProp('options', e.target.value.split('\n').filter(o => o.trim()))}
+                placeholder="Option 1&#10;Option 2&#10;Option 3"
+              />
+            </div>
+          </div>
+        );
+      
+      case 'checkbox':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Label</Label>
+              <Input
+                value={component.props.label}
+                onChange={(e) => updateProp('label', e.target.value)}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={component.props.checked}
+                onCheckedChange={(checked) => updateProp('checked', checked)}
+              />
+              <Label>Default Checked</Label>
+            </div>
+          </div>
+        );
+      
+      case 'container':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Padding</Label>
+              <Input
+                value={component.props.padding}
+                onChange={(e) => updateProp('padding', e.target.value)}
+                placeholder="20px"
+              />
+            </div>
+            <div>
+              <Label>Background Color</Label>
+              <Input
+                type="color"
+                value={component.props.backgroundColor}
+                onChange={(e) => updateProp('backgroundColor', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Border Radius</Label>
+              <Input
+                value={component.props.borderRadius}
+                onChange={(e) => updateProp('borderRadius', e.target.value)}
+                placeholder="8px"
+              />
+            </div>
+          </div>
+        );
+      
+      case 'grid':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Columns</Label>
+              <Input
+                type="number"
+                value={component.props.columns}
+                onChange={(e) => updateProp('columns', parseInt(e.target.value))}
+                min="1"
+                max="6"
+              />
+            </div>
+            <div>
+              <Label>Gap</Label>
+              <Input
+                value={component.props.gap}
+                onChange={(e) => updateProp('gap', e.target.value)}
+                placeholder="20px"
+              />
+            </div>
+            <div>
+              <Label>Padding</Label>
+              <Input
+                value={component.props.padding}
+                onChange={(e) => updateProp('padding', e.target.value)}
+                placeholder="20px"
+              />
+            </div>
+          </div>
+        );
+      
+      case 'table':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Headers (comma separated)</Label>
+              <Input
+                value={component.props.headers.join(', ')}
+                onChange={(e) => updateProp('headers', e.target.value.split(',').map(h => h.trim()))}
+                placeholder="Name, Email, Status"
+              />
+            </div>
+            <div>
+              <Label>Sample Row (comma separated)</Label>
+              <Input
+                value={component.props.rows[0]?.join(', ') || ''}
+                onChange={(e) => {
+                  const newRow = e.target.value.split(',').map(c => c.trim());
+                  updateProp('rows', [newRow]);
+                }}
+                placeholder="John Doe, john@example.com, Active"
               />
             </div>
           </div>
