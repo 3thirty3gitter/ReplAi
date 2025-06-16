@@ -1,4 +1,3 @@
-import { VM } from 'vm2';
 import { spawn } from 'child_process';
 import { writeFileSync, unlinkSync, mkdtempSync } from 'fs';
 import { join } from 'path';
@@ -13,57 +12,73 @@ export interface ExecutionResult {
 
 export async function executeJavaScript(code: string): Promise<ExecutionResult> {
   const startTime = Date.now();
-  let output = '';
-  let error = '';
+  
+  return new Promise((resolve) => {
+    let output = '';
+    let error = '';
 
-  try {
-    // Create a sandbox with limited capabilities
-    const vm = new VM({
-      timeout: 5000, // 5 second timeout
-      sandbox: {
-        console: {
-          log: (...args: any[]) => {
-            output += args.map(arg => 
-              typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-            ).join(' ') + '\n';
-          },
-          error: (...args: any[]) => {
-            error += args.map(arg => 
-              typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-            ).join(' ') + '\n';
-          }
-        },
-        setTimeout: setTimeout,
-        setInterval: setInterval,
-        clearTimeout: clearTimeout,
-        clearInterval: clearInterval,
-        Math: Math,
-        Date: Date,
-        JSON: JSON,
-        parseInt: parseInt,
-        parseFloat: parseFloat,
-        isNaN: isNaN,
-        isFinite: isFinite
-      }
-    });
+    // Create a temporary file for the JavaScript code
+    const tempDir = mkdtempSync(join(tmpdir(), 'js-exec-'));
+    const tempFile = join(tempDir, 'temp.js');
+    
+    try {
+      writeFileSync(tempFile, code);
 
-    // Execute the code
-    vm.run(code);
+      // Execute Node.js with timeout
+      const node = spawn('node', [tempFile], {
+        timeout: 10000, // 10 second timeout
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
 
-    return {
-      output: output || 'Code executed successfully (no output)',
-      error,
-      status: error ? 'error' : 'completed',
-      executionTime: Date.now() - startTime
-    };
-  } catch (err) {
-    return {
-      output,
-      error: (err as Error).message,
-      status: 'error',
-      executionTime: Date.now() - startTime
-    };
-  }
+      node.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+
+      node.stderr.on('data', (data) => {
+        error += data.toString();
+      });
+
+      node.on('close', (code) => {
+        // Clean up temp file
+        try {
+          unlinkSync(tempFile);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+
+        resolve({
+          output: output || 'Code executed successfully (no output)',
+          error,
+          status: code === 0 && !error ? 'completed' : 'error',
+          executionTime: Date.now() - startTime
+        });
+      });
+
+      node.on('error', (err) => {
+        // Clean up temp file
+        try {
+          unlinkSync(tempFile);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+
+        resolve({
+          output,
+          error: `Failed to execute Node.js: ${err.message}`,
+          status: 'error',
+          executionTime: Date.now() - startTime
+        });
+      });
+
+    } catch (err) {
+      resolve({
+        output,
+        error: `Failed to create temp file: ${(err as Error).message}`,
+        status: 'error',
+        executionTime: Date.now() - startTime
+      });
+    }
+  });
 }
 
 export async function executePython(code: string): Promise<ExecutionResult> {

@@ -18,7 +18,7 @@ export const files = pgTable("files", {
   content: text("content").default("").notNull(),
   language: text("language").default("javascript").notNull(),
   isDirectory: boolean("is_directory").default(false).notNull(),
-  parentId: integer("parent_id").references(() => files.id),
+  parentId: integer("parent_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

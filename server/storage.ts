@@ -86,7 +86,8 @@ for (let i = 0; i < 10; i++) {
 // - Feature implementations
 // - Best practices`,
       language: "javascript",
-      isDirectory: false
+      isDirectory: false,
+      parentId: null
     });
 
     await this.createFile({
@@ -104,7 +105,8 @@ if __name__ == "__main__":
     for i in range(10):
         print(f"F({i}) = {fibonacci(i)}")`,
       language: "python",
-      isDirectory: false
+      isDirectory: false,
+      parentId: null
     });
 
     await this.createFile({
@@ -125,7 +127,8 @@ if __name__ == "__main__":
 </body>
 </html>`,
       language: "html",
-      isDirectory: false
+      isDirectory: false,
+      parentId: null
     });
 
     await this.createFile({
@@ -144,7 +147,8 @@ h1 {
     text-align: center;
 }`,
       language: "css",
-      isDirectory: false
+      isDirectory: false,
+      parentId: null
     });
 
     await this.createFile({
@@ -171,7 +175,8 @@ This is a sample project created in CodeIDE.
 
 Happy coding!`,
       language: "markdown",
-      isDirectory: false
+      isDirectory: false,
+      parentId: null
     });
   }
 
@@ -181,6 +186,7 @@ Happy coding!`,
     const newProject: Project = {
       ...project,
       id,
+      description: project.description || null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -219,6 +225,10 @@ Happy coding!`,
     const newFile: File = {
       ...file,
       id,
+      content: file.content || "",
+      language: file.language || "javascript",
+      isDirectory: file.isDirectory || false,
+      parentId: file.parentId || null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
