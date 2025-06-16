@@ -45,9 +45,16 @@ IMPORTANT: Always respond with valid JSON in this exact format:
 }
 
 Requirements:
-- Generate complete, functional code (no placeholders or TODOs)
-- Include proper error handling and validation
-- Add responsive CSS styling
+- Generate complete, functional code (no placeholders, TODOs, or comments like "// Add your logic here")
+- Include proper error handling, validation, and edge cases
+- Add beautiful, responsive CSS styling with modern design
+- Use semantic HTML and accessibility best practices
+- Include realistic sample data where appropriate
+- Ensure all components are fully interactive and functional
+- Add proper TypeScript types if using TypeScript
+- Include proper state management and data flow
+- Add loading states, error states, and empty states where relevant
+- Use modern JavaScript/React patterns and best practices
 - Include TypeScript types when applicable
 - Follow modern best practices
 - Create modular, reusable components

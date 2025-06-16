@@ -11,6 +11,7 @@ import { DatabaseBuilder } from "@/components/DatabaseBuilder";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
 import { DeploymentCenter } from "@/components/DeploymentCenter";
 import { ProjectTemplates } from "@/components/ProjectTemplates";
+import { QuickStartTemplates } from "@/components/QuickStartTemplates";
 import SettingsPage from "./Settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ export default function IDE() {
   const [pendingChanges, setPendingChanges] = useState<Map<number, string>>(new Map());
   const [activeTab, setActiveTab] = useState<string>('code');
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showQuickStart, setShowQuickStart] = useState(false);
   const [aiMessages, setAIMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: number, actions?: Array<{type: 'generate-project' | 'generate-file', label: string, data: any}>}>>([]);
   const [aiInput, setAIInput] = useState('');
   const [isAILoading, setIsAILoading] = useState(false);
@@ -535,14 +537,43 @@ export default function IDE() {
                       {aiMessages.length === 0 ? (
                         <div className="text-center">
                           <Bot className="h-12 w-12 mx-auto mb-3 text-editor-primary" />
-                          <p className="text-sm text-editor-text">Hello! I'm your AI coding assistant.</p>
-                          <p className="text-sm text-editor-text-dim">I can help you with:</p>
-                          <ul className="text-xs text-editor-text-dim mt-2 space-y-1">
-                            <li>• Code generation</li>
-                            <li>• Debugging</li>
-                            <li>• Code explanations</li>
-                            <li>• Best practices</li>
-                          </ul>
+                          <p className="text-sm text-editor-text font-medium">AI Assistant - Build Anything</p>
+                          <p className="text-xs text-editor-text-dim mb-4">Tell me what you want to build and I'll create it for you!</p>
+                          
+                          <div className="space-y-3 mb-4">
+                            <Button 
+                              onClick={() => setShowQuickStart(true)}
+                              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
+                            >
+                              <Play className="h-4 w-4 mr-2" />
+                              Browse App Templates
+                            </Button>
+                            
+                            <div className="space-y-2">
+                              <p className="text-xs text-editor-text-dim font-medium">Or try these examples:</p>
+                              {[
+                                "Build a todo app with drag and drop",
+                                "Create a calculator with history",
+                                "Make a weather dashboard",
+                                "Build a portfolio website"
+                              ].map((example, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => setAIInput(example)}
+                                  className="block w-full text-left px-3 py-2 text-xs bg-editor-bg hover:bg-editor-primary/10 border border-editor-border hover:border-editor-primary/30 rounded-md transition-colors"
+                                >
+                                  <span className="text-editor-primary">"{example}"</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="text-xs text-editor-text-dim space-y-1">
+                            <p>• Complete project generation</p>
+                            <p>• Individual file creation</p>
+                            <p>• Code explanations & debugging</p>
+                            <p>• Best practices & optimization</p>
+                          </div>
                         </div>
                       ) : (
                         aiMessages.map((msg, index) => (
@@ -692,6 +723,21 @@ export default function IDE() {
           </div>
         </div>
       </div>
+
+      {showQuickStart && (
+        <QuickStartTemplates
+          onClose={() => setShowQuickStart(false)}
+          onSelectTemplate={(prompt) => {
+            setAIInput(prompt);
+            setShowQuickStart(false);
+            // Auto-submit the prompt to generate the project
+            setTimeout(() => {
+              const form = document.querySelector('#ai-form') as HTMLFormElement;
+              if (form) form.requestSubmit();
+            }, 100);
+          }}
+        />
+      )}
     </div>
   );
 }
