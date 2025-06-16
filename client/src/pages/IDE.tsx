@@ -6,7 +6,25 @@ import { FileExplorer } from "@/components/FileExplorer";
 import { CodeEditor } from "@/components/CodeEditor";
 import { AIAssistant } from "@/components/AIAssistant";
 import { Terminal } from "@/components/Terminal";
+import { VisualBuilder } from "@/components/VisualBuilder";
+import { DatabaseBuilder } from "@/components/DatabaseBuilder";
+import { WorkflowBuilder } from "@/components/WorkflowBuilder";
+import { DeploymentCenter } from "@/components/DeploymentCenter";
+import { ProjectTemplates } from "@/components/ProjectTemplates";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  Code2, 
+  Layout, 
+  Database, 
+  Zap, 
+  Rocket, 
+  FileText,
+  Palette,
+  Settings,
+  HelpCircle
+} from "lucide-react";
 import type { Project, File } from "@shared/schema";
 
 export default function IDE() {
@@ -16,6 +34,8 @@ export default function IDE() {
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [isTerminalMaximized, setIsTerminalMaximized] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<Map<number, string>>(new Map());
+  const [activeTab, setActiveTab] = useState<string>('code');
+  const [showTemplates, setShowTemplates] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -193,6 +213,20 @@ export default function IDE() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeFileId, pendingChanges]);
 
+  if (showTemplates) {
+    return (
+      <ProjectTemplates
+        onSelectTemplate={(template) => {
+          setShowTemplates(false);
+          toast({
+            title: "Template selected",
+            description: `Creating project from ${template.name} template`
+          });
+        }}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-editor-bg text-editor-text">
       <Toolbar
@@ -204,58 +238,153 @@ export default function IDE() {
         isAIOpen={isAIOpen}
       />
       
-      <div className="flex flex-1 overflow-hidden">
-        <FileExplorer
-          projectId={currentProjectId}
-          onFileSelect={handleFileSelect}
-          selectedFileId={activeFileId}
-        />
-        
-        <div className="flex-1 flex flex-col">
-          <div className="flex flex-1 overflow-hidden">
-            <CodeEditor
-              openFiles={openFiles}
-              activeFileId={activeFileId}
-              onFileChange={handleFileChange}
-              onFileClose={handleFileClose}
-              onFileSelect={setActiveFileId}
-            />
-            
-            <AIAssistant
-              projectId={currentProjectId}
-              isOpen={isAIOpen}
-              onClose={() => setIsAIOpen(false)}
-              currentCode={currentCode}
-              currentLanguage={currentLanguage}
-            />
-          </div>
+      {/* Enhanced Navigation Tabs */}
+      <div className="bg-editor-surface border-b border-editor-border">
+        <div className="flex items-center justify-between px-4 py-2">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+            <TabsList className="bg-transparent border-none h-auto p-0 space-x-1">
+              <TabsTrigger 
+                value="code" 
+                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
+              >
+                <Code2 className="h-4 w-4 mr-2" />
+                Code Editor
+              </TabsTrigger>
+              <TabsTrigger 
+                value="visual" 
+                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
+              >
+                <Layout className="h-4 w-4 mr-2" />
+                Visual Builder
+              </TabsTrigger>
+              <TabsTrigger 
+                value="database" 
+                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
+              >
+                <Database className="h-4 w-4 mr-2" />
+                Database
+              </TabsTrigger>
+              <TabsTrigger 
+                value="workflows" 
+                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                Workflows
+              </TabsTrigger>
+              <TabsTrigger 
+                value="deploy" 
+                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary"
+              >
+                <Rocket className="h-4 w-4 mr-2" />
+                Deploy
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
           
-          <Terminal
-            projectId={currentProjectId}
-            isMaximized={isTerminalMaximized}
-            onToggleMaximize={() => setIsTerminalMaximized(!isTerminalMaximized)}
-          />
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTemplates(true)}
+              className="text-xs bg-editor-surface hover:bg-editor-bg border-editor-border"
+            >
+              <FileText className="h-3 w-3 mr-1" />
+              Templates
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs bg-editor-surface hover:bg-editor-bg border-editor-border"
+            >
+              <HelpCircle className="h-3 w-3 mr-1" />
+              Help
+            </Button>
+          </div>
         </div>
       </div>
       
-      {/* Status Bar */}
+      <div className="flex flex-1 overflow-hidden">
+        <Tabs value={activeTab} className="flex flex-1">
+          {/* Code Editor Tab */}
+          <TabsContent value="code" className="flex flex-1 m-0">
+            <FileExplorer
+              projectId={currentProjectId}
+              onFileSelect={handleFileSelect}
+              selectedFileId={activeFileId}
+            />
+            
+            <div className="flex-1 flex flex-col">
+              <div className="flex flex-1 overflow-hidden">
+                <CodeEditor
+                  openFiles={openFiles}
+                  activeFileId={activeFileId}
+                  onFileChange={handleFileChange}
+                  onFileClose={handleFileClose}
+                  onFileSelect={setActiveFileId}
+                />
+                
+                <AIAssistant
+                  projectId={currentProjectId}
+                  isOpen={isAIOpen}
+                  onClose={() => setIsAIOpen(false)}
+                  currentCode={currentCode}
+                  currentLanguage={currentLanguage}
+                />
+              </div>
+              
+              <Terminal
+                projectId={currentProjectId}
+                isMaximized={isTerminalMaximized}
+                onToggleMaximize={() => setIsTerminalMaximized(!isTerminalMaximized)}
+              />
+            </div>
+          </TabsContent>
+          
+          {/* Visual Builder Tab */}
+          <TabsContent value="visual" className="flex flex-1 m-0">
+            <VisualBuilder projectId={currentProjectId} />
+          </TabsContent>
+          
+          {/* Database Builder Tab */}
+          <TabsContent value="database" className="flex flex-1 m-0">
+            <DatabaseBuilder projectId={currentProjectId} />
+          </TabsContent>
+          
+          {/* Workflow Builder Tab */}
+          <TabsContent value="workflows" className="flex flex-1 m-0">
+            <WorkflowBuilder projectId={currentProjectId} />
+          </TabsContent>
+          
+          {/* Deployment Center Tab */}
+          <TabsContent value="deploy" className="flex flex-1 m-0">
+            <DeploymentCenter projectId={currentProjectId} />
+          </TabsContent>
+        </Tabs>
+      </div>
+      
+      {/* Enhanced Status Bar */}
       <div className="h-6 bg-editor-surface border-t border-editor-border flex items-center justify-between px-4 text-xs">
         <div className="flex items-center space-x-4">
           <span className="text-editor-text-dim">
-            {activeFile?.language?.toUpperCase() || 'PLAINTEXT'}
+            Project: {project?.name || 'Loading...'}
           </span>
-          <span className="text-editor-text-dim">UTF-8</span>
-          <span className="text-editor-text-dim">LF</span>
+          <span className="text-editor-text-dim">
+            Mode: {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+          </span>
           <div className="flex items-center space-x-1">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span className="text-editor-text-dim">Connected</span>
           </div>
         </div>
         <div className="flex items-center space-x-4">
-          <span className="text-editor-text-dim">
-            {activeFile ? `${activeFile.name}` : 'No file selected'}
-          </span>
-          <span className="text-editor-text-dim">Spaces: 2</span>
+          {activeTab === 'code' && activeFile && (
+            <>
+              <span className="text-editor-text-dim">
+                {activeFile.language?.toUpperCase() || 'PLAINTEXT'}
+              </span>
+              <span className="text-editor-text-dim">{activeFile.name}</span>
+            </>
+          )}
           <div className="flex items-center space-x-1">
             <div className="w-2 h-2 bg-editor-primary rounded-full"></div>
             <span className="text-editor-primary">AI Ready</span>

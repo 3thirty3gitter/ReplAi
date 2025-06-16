@@ -39,6 +39,27 @@ export interface IStorage {
   getCodeExecution(id: number): Promise<CodeExecution | undefined>;
   updateCodeExecution(id: number, execution: Partial<InsertCodeExecution>): Promise<CodeExecution | undefined>;
   getCodeExecutionsByProject(projectId: number): Promise<CodeExecution[]>;
+
+  // Database Tables
+  createDataTable(table: InsertDataTable): Promise<DataTable>;
+  getDataTable(id: number): Promise<DataTable | undefined>;
+  getDataTablesByProject(projectId: number): Promise<DataTable[]>;
+  updateDataTable(id: number, table: Partial<InsertDataTable>): Promise<DataTable | undefined>;
+  deleteDataTable(id: number): Promise<boolean>;
+
+  // Workflows
+  createWorkflow(workflow: InsertWorkflow): Promise<Workflow>;
+  getWorkflow(id: number): Promise<Workflow | undefined>;
+  getWorkflowsByProject(projectId: number): Promise<Workflow[]>;
+  updateWorkflow(id: number, workflow: Partial<InsertWorkflow>): Promise<Workflow | undefined>;
+  deleteWorkflow(id: number): Promise<boolean>;
+
+  // Deployments
+  createDeployment(deployment: InsertDeployment): Promise<Deployment>;
+  getDeployment(id: number): Promise<Deployment | undefined>;
+  getDeploymentsByProject(projectId: number): Promise<Deployment[]>;
+  updateDeployment(id: number, deployment: Partial<InsertDeployment>): Promise<Deployment | undefined>;
+  deleteDeployment(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {

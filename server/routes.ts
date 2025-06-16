@@ -291,5 +291,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Database tables routes
+  app.get('/api/projects/:projectId/database-tables', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const tables = await storage.getDataTablesByProject(projectId);
+      res.json(tables);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/projects/:projectId/database-tables', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const tableData = { ...req.body, projectId };
+      const table = await storage.createDataTable(tableData);
+      res.json(table);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Workflow routes
+  app.get('/api/projects/:projectId/workflows', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const workflows = await storage.getWorkflowsByProject(projectId);
+      res.json(workflows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/projects/:projectId/workflows', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const workflowData = { ...req.body, projectId };
+      const workflow = await storage.createWorkflow(workflowData);
+      res.json(workflow);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Deployment routes
+  app.get('/api/projects/:projectId/deployments', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const deployments = await storage.getDeploymentsByProject(projectId);
+      res.json(deployments);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/projects/:projectId/deploy', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const deploymentData = { 
+        ...req.body, 
+        projectId,
+        version: `v${Date.now()}`,
+        status: 'building',
+        url: `https://project-${projectId}.codeide.app`
+      };
+      const deployment = await storage.createDeployment(deploymentData);
+      
+      // Simulate deployment process
+      setTimeout(async () => {
+        await storage.updateDeployment(deployment.id, { 
+          status: 'deployed',
+          buildTime: Math.floor(Math.random() * 180) + 60
+        });
+      }, 5000);
+      
+      res.json(deployment);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Project templates route
+  app.post('/api/projects/from-template', async (req, res) => {
+    try {
+      const { templateId, name, components, database, workflows } = req.body;
+      
+      // Create project from template
+      const project = await storage.createProject({
+        name: `${name} (from template)`,
+        description: `Created from ${templateId} template`
+      });
+
+      // Create database tables
+      for (const table of database) {
+        await storage.createDataTable({
+          projectId: project.id,
+          name: table.name,
+          fields: table.fields,
+          relationships: []
+        });
+      }
+
+      // Create workflows
+      for (const workflow of workflows) {
+        await storage.createWorkflow({
+          projectId: project.id,
+          name: workflow.name,
+          trigger: workflow.trigger,
+          steps: workflow.steps,
+          isActive: true
+        });
+      }
+
+      // Create initial files based on template
+      await storage.createFile({
+        projectId: project.id,
+        name: 'index.html',
+        path: '/index.html',
+        content: `<!DOCTYPE html>
+<html>
+<head>
+    <title>${name}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <h1>Welcome to ${name}</h1>
+    <p>Your application is ready to be customized!</p>
+</body>
+</html>`,
+        language: 'html'
+      });
+
+      res.json(project);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
   return httpServer;
 }
