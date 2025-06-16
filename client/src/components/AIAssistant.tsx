@@ -54,9 +54,20 @@ export function AIAssistant({
       });
     },
     onSuccess: (data: any) => {
+      let responseContent = '';
+      
+      if (data && typeof data === 'object' && data.message) {
+        responseContent = data.message;
+      } else if (typeof data === 'string') {
+        responseContent = data;
+      } else {
+        console.error('Unexpected response format:', data);
+        responseContent = 'Sorry, I encountered an issue processing your request. Please try again.';
+      }
+      
       const aiMessage: AIMessage = {
         role: 'assistant',
-        content: data.message || 'I received your message but couldn\'t generate a response.',
+        content: responseContent,
         timestamp: Date.now()
       };
       

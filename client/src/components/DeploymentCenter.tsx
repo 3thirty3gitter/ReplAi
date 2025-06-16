@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { 
   Rocket, 
   Globe, 
@@ -22,7 +24,15 @@ import {
   Zap,
   Monitor,
   Smartphone,
-  Wifi
+  Wifi,
+  Shield,
+  BarChart3,
+  Upload,
+  Check,
+  X,
+  Play,
+  Pause,
+  RefreshCw
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -47,11 +57,21 @@ interface Deployment {
   url?: string;
   createdAt: string;
   buildTime?: number;
+  logs?: string;
 }
 
 interface DeploymentCenterProps {
   projectId: number;
 }
+
+const deploymentSteps = [
+  { id: 1, name: 'Preparing Build', description: 'Setting up build environment' },
+  { id: 2, name: 'Building Application', description: 'Compiling and optimizing code' },
+  { id: 3, name: 'Database Setup', description: 'Configuring database connections' },
+  { id: 4, name: 'Asset Optimization', description: 'Optimizing images and static files' },
+  { id: 5, name: 'Deployment', description: 'Publishing to production servers' },
+  { id: 6, name: 'Health Check', description: 'Verifying deployment status' }
+];
 
 export function DeploymentCenter({ projectId }: DeploymentCenterProps) {
   const [deployConfig, setDeployConfig] = useState<DeploymentConfig>({
@@ -66,6 +86,8 @@ export function DeploymentCenter({ projectId }: DeploymentCenterProps) {
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployProgress, setDeployProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState('');
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [deploymentUrl, setDeploymentUrl] = useState('');
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -81,388 +103,455 @@ export function DeploymentCenter({ projectId }: DeploymentCenterProps) {
     mutationFn: async (config: DeploymentConfig) => {
       return apiRequest('POST', `/api/projects/${projectId}/deploy`, config);
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'deployments'] });
+      if (data.url) {
+        setDeploymentUrl(data.url);
+      }
       toast({
-        title: "Deployment started",
-        description: "Your application is being deployed..."
+        title: "Deployment Successful",
+        description: "Your application is now live!"
       });
     },
     onError: (error) => {
+      setIsDeploying(false);
+      setDeployProgress(0);
       toast({
-        title: "Deployment failed",
+        title: "Deployment Failed",
         description: (error as Error).message,
         variant: "destructive"
       });
     }
   });
 
+  // Simulate deployment progress
+  useEffect(() => {
+    if (isDeploying) {
+      const interval = setInterval(() => {
+        setDeployProgress(prev => {
+          const newProgress = prev + Math.random() * 15;
+          if (newProgress >= 100) {
+            setIsDeploying(false);
+            clearInterval(interval);
+            return 100;
+          }
+          
+          // Update current step based on progress
+          const stepIndex = Math.floor((newProgress / 100) * deploymentSteps.length);
+          setCurrentStepIndex(stepIndex);
+          setCurrentStep(deploymentSteps[stepIndex]?.name || '');
+          
+          return newProgress;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [isDeploying]);
+
   const handleDeploy = async () => {
     setIsDeploying(true);
     setDeployProgress(0);
+    setCurrentStepIndex(0);
+    setCurrentStep(deploymentSteps[0].name);
     
-    const steps = [
-      { name: 'Preparing build environment', duration: 2000 },
-      { name: 'Building frontend', duration: 3000 },
-      { name: 'Setting up database', duration: 2500 },
-      { name: 'Deploying to servers', duration: 4000 },
-      { name: 'Running health checks', duration: 1500 },
-      { name: 'Going live', duration: 1000 }
-    ];
-
-    let progress = 0;
-    const stepProgress = 100 / steps.length;
-
-    for (const step of steps) {
-      setCurrentStep(step.name);
-      await new Promise(resolve => setTimeout(resolve, step.duration));
-      progress += stepProgress;
-      setDeployProgress(progress);
-    }
-
-    deployMutation.mutate(deployConfig);
-    setIsDeploying(false);
-    setCurrentStep('');
-    setDeployProgress(0);
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'deployed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'building':
-        return <Clock className="h-4 w-4 text-yellow-500 animate-spin" />;
-      case 'failed':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-400" />;
+    try {
+      await deployMutation.mutateAsync(deployConfig);
+    } catch (error) {
+      // Error handling is done in the mutation
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'deployed':
-        return 'bg-green-100 text-green-800';
-      case 'building':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const updateFeature = (feature: keyof DeploymentConfig['features'], enabled: boolean) => {
+    setDeployConfig(prev => ({
+      ...prev,
+      features: {
+        ...prev.features,
+        [feature]: enabled
+      }
+    }));
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: "Copied to clipboard",
-      description: "URL has been copied to your clipboard"
+      title: "Copied",
+      description: "URL copied to clipboard"
     });
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'deployed': return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'building': return <RefreshCw className="h-4 w-4 text-blue-600 animate-spin" />;
+      case 'failed': return <X className="h-4 w-4 text-red-600" />;
+      default: return <Clock className="h-4 w-4 text-gray-400" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'deployed': return 'bg-green-100 text-green-800';
+      case 'building': return 'bg-blue-100 text-blue-800';
+      case 'failed': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   const latestDeployment = deployments[0];
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold flex items-center">
-                <Rocket className="h-6 w-6 mr-3 text-blue-600" />
-                Deployment Center
-              </h1>
-              <p className="text-gray-600 mt-1">Deploy your application to the world</p>
-            </div>
-            <div className="flex items-center space-x-3">
-              {latestDeployment?.status === 'deployed' && (
-                <Button variant="outline" onClick={() => window.open(latestDeployment.url, '_blank')}>
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  View Live Site
-                </Button>
-              )}
-              <Button 
-                onClick={handleDeploy} 
-                disabled={isDeploying}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <Rocket className="h-4 w-4 mr-2" />
-                {isDeploying ? 'Deploying...' : 'Deploy Now'}
-              </Button>
-            </div>
+    <div className="h-full bg-editor-bg">
+      {/* Header */}
+      <div className="p-6 border-b border-editor-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-editor-text flex items-center">
+              <Rocket className="h-6 w-6 mr-2" />
+              Deployment Center
+            </h2>
+            <p className="text-editor-text-dim">Deploy your application to the web with one click</p>
           </div>
+          <Button 
+            size="lg" 
+            onClick={handleDeploy}
+            disabled={isDeploying || deployMutation.isPending}
+          >
+            {isDeploying ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Deploying...
+              </>
+            ) : (
+              <>
+                <Rocket className="h-4 w-4 mr-2" />
+                Deploy Now
+              </>
+            )}
+          </Button>
         </div>
+      </div>
 
-        <div className="flex-1 p-6">
-          <div className="max-w-6xl mx-auto space-y-6">
-            {/* Current Status */}
-            {latestDeployment && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Current Deployment</span>
-                    <Badge className={getStatusColor(latestDeployment.status)}>
-                      {latestDeployment.status}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+      <div className="flex h-full">
+        {/* Configuration Panel */}
+        <div className="w-80 border-r border-editor-border bg-editor-surface">
+          <Tabs defaultValue="config" className="h-full">
+            <TabsList className="grid w-full grid-cols-2 m-4">
+              <TabsTrigger value="config">Configuration</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="config" className="p-4 space-y-6">
+              <div>
+                <Label className="text-sm font-medium">Environment</Label>
+                <Select 
+                  value={deployConfig.environment} 
+                  onValueChange={(value: 'staging' | 'production') => 
+                    setDeployConfig(prev => ({ ...prev, environment: value }))
+                  }
+                >
+                  <SelectTrigger className="mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="staging">Staging</SelectItem>
+                    <SelectItem value="production">Production</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  {deployConfig.environment === 'staging' 
+                    ? 'Perfect for testing before going live' 
+                    : 'Live production environment'}
+                </p>
+              </div>
+
+              <Separator />
+
+              <div>
+                <Label className="text-sm font-medium mb-4 block">Features</Label>
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      {getStatusIcon(latestDeployment.status)}
+                    <div className="flex items-center space-x-2">
+                      <Database className="h-4 w-4 text-blue-600" />
                       <div>
-                        <p className="font-medium">Version {latestDeployment.version}</p>
-                        <p className="text-sm text-gray-500">
-                          Deployed {new Date(latestDeployment.createdAt).toLocaleString()}
-                        </p>
+                        <p className="text-sm font-medium">Database</p>
+                        <p className="text-xs text-gray-500">Enable data storage</p>
                       </div>
                     </div>
-                    {latestDeployment.url && (
-                      <div className="flex items-center space-x-2">
-                        <code className="bg-gray-100 px-3 py-1 rounded text-sm">
-                          {latestDeployment.url}
-                        </code>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => copyToClipboard(latestDeployment.url!)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
+                    <Switch
+                      checked={deployConfig.features.database}
+                      onCheckedChange={(checked) => updateFeature('database', checked)}
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            )}
 
-            {/* Deployment Progress */}
-            {isDeploying && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Deployment in Progress</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span>{currentStep}</span>
-                        <span>{Math.round(deployProgress)}%</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Shield className="h-4 w-4 text-green-600" />
+                      <div>
+                        <p className="text-sm font-medium">Authentication</p>
+                        <p className="text-xs text-gray-500">User login system</p>
                       </div>
-                      <Progress value={deployProgress} className="w-full" />
                     </div>
-                    <p className="text-sm text-gray-600">
-                      This usually takes 2-3 minutes. You can close this window and we'll notify you when it's done.
-                    </p>
+                    <Switch
+                      checked={deployConfig.features.authentication}
+                      onCheckedChange={(checked) => updateFeature('authentication', checked)}
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Configuration */}
-              <div className="lg:col-span-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Settings className="h-5 w-5 mr-2" />
-                      Deployment Configuration
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Tabs defaultValue="general" className="w-full">
-                      <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="general">General</TabsTrigger>
-                        <TabsTrigger value="features">Features</TabsTrigger>
-                        <TabsTrigger value="domain">Domain</TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value="general" className="space-y-4">
-                        <div>
-                          <Label htmlFor="environment">Environment</Label>
-                          <Select 
-                            value={deployConfig.environment} 
-                            onValueChange={(value: any) => setDeployConfig(prev => ({ ...prev, environment: value }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="staging">Staging (for testing)</SelectItem>
-                              <SelectItem value="production">Production (live site)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        <div className="space-y-3">
-                          <Label>Performance & Optimization</Label>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                              <Zap className="h-5 w-5 text-blue-500" />
-                              <div>
-                                <p className="text-sm font-medium">Auto-scaling</p>
-                                <p className="text-xs text-gray-500">Handles traffic spikes</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                              <Globe className="h-5 w-5 text-green-500" />
-                              <div>
-                                <p className="text-sm font-medium">Global CDN</p>
-                                <p className="text-xs text-gray-500">Fast worldwide delivery</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </TabsContent>
-                      
-                      <TabsContent value="features" className="space-y-4">
-                        <div className="space-y-3">
-                          <Label>Enable Features</Label>
-                          <div className="space-y-3">
-                            {Object.entries({
-                              database: { icon: Database, label: 'Database', desc: 'PostgreSQL database for data storage' },
-                              authentication: { icon: Wifi, label: 'User Authentication', desc: 'Login and signup functionality' },
-                              fileUploads: { icon: Code, label: 'File Uploads', desc: 'Allow users to upload files' },
-                              analytics: { icon: Monitor, label: 'Analytics', desc: 'Track visitor behavior' }
-                            }).map(([key, { icon: Icon, label, desc }]) => (
-                              <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
-                                <div className="flex items-center space-x-3">
-                                  <Icon className="h-5 w-5 text-blue-500" />
-                                  <div>
-                                    <p className="text-sm font-medium">{label}</p>
-                                    <p className="text-xs text-gray-500">{desc}</p>
-                                  </div>
-                                </div>
-                                <input
-                                  type="checkbox"
-                                  checked={deployConfig.features[key as keyof typeof deployConfig.features]}
-                                  onChange={(e) => setDeployConfig(prev => ({
-                                    ...prev,
-                                    features: { ...prev.features, [key]: e.target.checked }
-                                  }))}
-                                  className="h-4 w-4 text-blue-600 rounded"
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </TabsContent>
-                      
-                      <TabsContent value="domain" className="space-y-4">
-                        <div>
-                          <Label htmlFor="customDomain">Custom Domain (optional)</Label>
-                          <Input
-                            id="customDomain"
-                            value={deployConfig.customDomain || ''}
-                            onChange={(e) => setDeployConfig(prev => ({ ...prev, customDomain: e.target.value }))}
-                            placeholder="www.myapp.com"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            Leave empty to use our free subdomain (myapp.codeide.app)
-                          </p>
-                        </div>
-                        
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                          <h4 className="text-sm font-medium text-blue-900 mb-2">SSL Certificate</h4>
-                          <p className="text-sm text-blue-700">
-                            We automatically provide free SSL certificates for all deployments, ensuring your site is secure with HTTPS.
-                          </p>
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                  </CardContent>
-                </Card>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Upload className="h-4 w-4 text-purple-600" />
+                      <div>
+                        <p className="text-sm font-medium">File Uploads</p>
+                        <p className="text-xs text-gray-500">Allow file uploading</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={deployConfig.features.fileUploads}
+                      onCheckedChange={(checked) => updateFeature('fileUploads', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <BarChart3 className="h-4 w-4 text-orange-600" />
+                      <div>
+                        <p className="text-sm font-medium">Analytics</p>
+                        <p className="text-xs text-gray-500">Track user behavior</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={deployConfig.features.analytics}
+                      onCheckedChange={(checked) => updateFeature('analytics', checked)}
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Quick Stats */}
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Deployment Stats</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Deployments</span>
-                      <span className="font-medium">{deployments.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Success Rate</span>
-                      <span className="font-medium text-green-600">
-                        {deployments.length > 0 ? Math.round((deployments.filter(d => d.status === 'deployed').length / deployments.length) * 100) : 0}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Avg Build Time</span>
-                      <span className="font-medium">2m 15s</span>
-                    </div>
-                  </CardContent>
-                </Card>
+              <Separator />
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Device Preview</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center space-x-3 p-2 bg-gray-50 rounded">
-                      <Monitor className="h-4 w-4 text-gray-600" />
-                      <span className="text-sm">Desktop Ready</span>
-                      <CheckCircle className="h-4 w-4 text-green-500 ml-auto" />
-                    </div>
-                    <div className="flex items-center space-x-3 p-2 bg-gray-50 rounded">
-                      <Smartphone className="h-4 w-4 text-gray-600" />
-                      <span className="text-sm">Mobile Optimized</span>
-                      <CheckCircle className="h-4 w-4 text-green-500 ml-auto" />
-                    </div>
-                  </CardContent>
-                </Card>
+              <div>
+                <Label className="text-sm font-medium">Custom Domain (Optional)</Label>
+                <Input
+                  className="mt-2"
+                  placeholder="example.com"
+                  value={deployConfig.customDomain || ''}
+                  onChange={(e) => setDeployConfig(prev => ({ ...prev, customDomain: e.target.value }))}
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave empty to use generated domain</p>
               </div>
-            </div>
+            </TabsContent>
 
-            {/* Deployment History */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Deployment History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-64">
-                  <div className="space-y-3">
-                    {deployments.map((deployment) => (
-                      <div key={deployment.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          {getStatusIcon(deployment.status)}
-                          <div>
-                            <p className="font-medium">Version {deployment.version}</p>
-                            <p className="text-sm text-gray-500">
-                              {new Date(deployment.createdAt).toLocaleString()}
-                            </p>
+            <TabsContent value="history" className="p-4">
+              <ScrollArea className="h-full">
+                <div className="space-y-3">
+                  {deployments.map((deployment) => (
+                    <Card key={deployment.id} className="bg-editor-bg">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            {getStatusIcon(deployment.status)}
+                            <span className="text-sm font-medium">v{deployment.version}</span>
                           </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
                           <Badge className={getStatusColor(deployment.status)}>
                             {deployment.status}
                           </Badge>
-                          {deployment.url && (
-                            <Button variant="outline" size="sm" onClick={() => window.open(deployment.url, '_blank')}>
-                              <ExternalLink className="h-4 w-4" />
+                        </div>
+                        <p className="text-xs text-gray-500 mb-2">
+                          {new Date(deployment.createdAt).toLocaleString()}
+                        </p>
+                        {deployment.url && (
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.open(deployment.url, '_blank')}
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              Visit
                             </Button>
-                          )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => copyToClipboard(deployment.url!)}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Main Deployment Area */}
+        <div className="flex-1 p-6">
+          {isDeploying ? (
+            /* Deployment Progress */
+            <div className="max-w-2xl mx-auto space-y-6">
+              <div className="text-center">
+                <Rocket className="h-16 w-16 mx-auto mb-4 text-blue-600" />
+                <h3 className="text-2xl font-semibold mb-2">Deploying Your Application</h3>
+                <p className="text-gray-600">Please wait while we build and deploy your project</p>
+              </div>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Overall Progress</span>
+                      <span className="text-sm text-gray-500">{Math.round(deployProgress)}%</span>
+                    </div>
+                    <Progress value={deployProgress} className="h-3" />
+                    <p className="text-sm text-gray-600">Current step: {currentStep}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="space-y-3">
+                {deploymentSteps.map((step, index) => (
+                  <div key={step.id} className={`flex items-center space-x-3 p-3 rounded-lg ${
+                    index < currentStepIndex ? 'bg-green-50' :
+                    index === currentStepIndex ? 'bg-blue-50' : 'bg-gray-50'
+                  }`}>
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                      index < currentStepIndex ? 'bg-green-500' :
+                      index === currentStepIndex ? 'bg-blue-500' : 'bg-gray-300'
+                    }`}>
+                      {index < currentStepIndex ? (
+                        <Check className="h-3 w-3 text-white" />
+                      ) : index === currentStepIndex ? (
+                        <RefreshCw className="h-3 w-3 text-white animate-spin" />
+                      ) : (
+                        <span className="text-xs text-white">{step.id}</span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{step.name}</p>
+                      <p className="text-xs text-gray-500">{step.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : latestDeployment?.status === 'deployed' ? (
+            /* Successful Deployment */
+            <div className="max-w-2xl mx-auto space-y-6">
+              <div className="text-center">
+                <CheckCircle className="h-16 w-16 mx-auto mb-4 text-green-600" />
+                <h3 className="text-2xl font-semibold mb-2">Application Successfully Deployed!</h3>
+                <p className="text-gray-600">Your application is now live and accessible to users</p>
+              </div>
+
+              {latestDeployment.url && (
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium">Live URL</Label>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <Input
+                            value={latestDeployment.url}
+                            readOnly
+                            className="flex-1"
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={() => copyToClipboard(latestDeployment.url!)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            onClick={() => window.open(latestDeployment.url, '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Visit
+                          </Button>
                         </div>
                       </div>
-                    ))}
-                    {deployments.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        <Rocket className="h-8 w-8 mx-auto mb-2" />
-                        <p>No deployments yet</p>
-                        <p className="text-sm">Deploy your first version to get started</p>
-                      </div>
-                    )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="grid md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <Monitor className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                    <p className="font-medium">Responsive Design</p>
+                    <p className="text-xs text-gray-500">Works on all devices</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <Zap className="h-8 w-8 mx-auto mb-2 text-yellow-600" />
+                    <p className="font-medium">Fast Loading</p>
+                    <p className="text-xs text-gray-500">Optimized performance</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <Shield className="h-8 w-8 mx-auto mb-2 text-green-600" />
+                    <p className="font-medium">Secure HTTPS</p>
+                    <p className="text-xs text-gray-500">SSL certificate included</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          ) : (
+            /* Ready to Deploy */
+            <div className="max-w-2xl mx-auto space-y-6">
+              <div className="text-center">
+                <Globe className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-2xl font-semibold mb-2">Ready to Deploy</h3>
+                <p className="text-gray-600">Configure your deployment settings and launch your application</p>
+              </div>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">What happens when you deploy:</h4>
+                    <ul className="space-y-2 text-sm text-gray-600">
+                      <li className="flex items-center space-x-2">
+                        <Check className="h-4 w-4 text-green-600" />
+                        <span>Code is compiled and optimized for production</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <Check className="h-4 w-4 text-green-600" />
+                        <span>Database tables are created automatically</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <Check className="h-4 w-4 text-green-600" />
+                        <span>SSL certificate is configured for security</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <Check className="h-4 w-4 text-green-600" />
+                        <span>CDN is set up for fast global access</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <Check className="h-4 w-4 text-green-600" />
+                        <span>Monitoring and analytics are enabled</span>
+                      </li>
+                    </ul>
                   </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+
+              <div className="text-center">
+                <Button size="lg" onClick={handleDeploy} disabled={deployMutation.isPending}>
+                  <Rocket className="h-5 w-5 mr-2" />
+                  Deploy Your Application
+                </Button>
+                <p className="text-xs text-gray-500 mt-2">
+                  Deployment typically takes 2-3 minutes
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
