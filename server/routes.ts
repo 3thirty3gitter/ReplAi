@@ -395,14 +395,16 @@ User's message: "${message}"`;
         includeTests: z.boolean().optional()
       }).parse(req.body);
 
-      auditLog.push(`[${new Date().toISOString()}] AUDIT: Starting build process for: "${prompt}"`);
+      auditLog.push(`[${new Date().toISOString()}] AUDIT: Starting Perplexity-only build process for: "${prompt}"`);
       auditLog.push(`[${new Date().toISOString()}] AUDIT: Project ID: ${projectId}, Type: ${projectType}, Framework: ${framework}`);
+      auditLog.push(`[${new Date().toISOString()}] AUDIT: System configured for Perplexity-only generation (no templates or fallbacks)`);
 
       // Check if Perplexity is actually being used for code generation
       if (!process.env.PERPLEXITY_API_KEY) {
-        auditLog.push(`[${new Date().toISOString()}] WARNING: No Perplexity API key - using template fallback`);
+        auditLog.push(`[${new Date().toISOString()}] ERROR: No Perplexity API key - build will fail (no fallbacks available)`);
+        throw new Error('Perplexity API key required - this system uses only Perplexity AI');
       } else {
-        auditLog.push(`[${new Date().toISOString()}] AUDIT: Perplexity API key available - attempting AI generation`);
+        auditLog.push(`[${new Date().toISOString()}] AUDIT: Perplexity API key available - proceeding with AI generation`);
       }
 
       const result = await generateProjectFiles({
