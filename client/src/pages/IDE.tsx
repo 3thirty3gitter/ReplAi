@@ -34,6 +34,8 @@ import {
   Play,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   FolderTree,
   Terminal as TerminalIcon
 } from "lucide-react";
@@ -69,6 +71,9 @@ export default function IDE() {
       };
     },
     isWaitingForApproval?: boolean;
+    isAuditReport?: boolean;
+    isCollapsed?: boolean;
+    messageTitle?: string;
   }>>([]);
   const [aiInput, setAIInput] = useState('');
   const [aiPanelWidth, setAiPanelWidth] = useState(400);
@@ -375,7 +380,9 @@ export default function IDE() {
         const analysisMessage = {
           role: 'assistant' as const,
           content: analysisData.message || "I understand your request. Let me create a comprehensive plan for your application.",
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          isCollapsed: true,
+          messageTitle: "Initial Analysis & Planning"
         };
         setAIMessages(prev => [...prev, analysisMessage]);
 
@@ -598,12 +605,39 @@ All code was generated directly by Perplexity AI based on your specific requirem
                   </div>
                 )}
                 <div className={`max-w-[80%] ${message.role === 'user' ? 'order-1' : ''}`}>
-                  <div className={`rounded-lg p-3 ${
+                  <div className={`rounded-lg ${
                     message.role === 'user' 
-                      ? 'bg-editor-primary text-white ml-auto' 
+                      ? 'bg-editor-primary text-white ml-auto p-3' 
                       : 'bg-editor-bg text-editor-text border border-editor-border'
                   }`}>
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    {message.messageTitle ? (
+                      <div>
+                        <button
+                          onClick={() => {
+                            setAIMessages(prev => prev.map(msg => 
+                              msg === message ? { ...msg, isCollapsed: !msg.isCollapsed } : msg
+                            ));
+                          }}
+                          className="w-full flex items-center justify-between p-3 text-left hover:bg-editor-surface"
+                        >
+                          <span className="text-sm font-medium text-editor-text">{message.messageTitle}</span>
+                          {message.isCollapsed ? (
+                            <ChevronDown className="h-4 w-4 text-editor-text-dim" />
+                          ) : (
+                            <ChevronUp className="h-4 w-4 text-editor-text-dim" />
+                          )}
+                        </button>
+                        {!message.isCollapsed && (
+                          <div className="px-3 pb-3">
+                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-3">
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      </div>
+                    )}
                     
                     {/* Plan Preview */}
                     {message.plan && (
