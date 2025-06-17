@@ -73,7 +73,7 @@ You provide production-ready code with detailed explanations and comprehensive s
     const content = data.choices?.[0]?.message?.content || '';
     
     // Create plan for app creation requests
-    let plan = null;
+    let plan = undefined;
     if (request.message.toLowerCase().includes('build') || request.message.toLowerCase().includes('create')) {
       plan = {
         name: "Custom Web Application",
