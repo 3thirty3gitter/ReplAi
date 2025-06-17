@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Toolbar } from "@/components/Toolbar";
-import { FileExplorer } from "@/components/FileExplorer";
-import { CodeEditor } from "@/components/CodeEditor";
+
 import { AIAssistant } from "@/components/AIAssistant";
 import { Terminal } from "@/components/Terminal";
 import { VisualBuilder } from "@/components/VisualBuilder";
@@ -43,11 +42,9 @@ import type { Project, File } from "@shared/schema";
 
 export default function IDE() {
   const [currentProjectId, setCurrentProjectId] = useState<number>(1);
-  const [openFiles, setOpenFiles] = useState<File[]>([]);
-  const [activeFileId, setActiveFileId] = useState<number | undefined>();
-  const [isExplorerCollapsed, setIsExplorerCollapsed] = useState(false);
+
   const [isTerminalMaximized, setIsTerminalMaximized] = useState(false);
-  const [pendingChanges, setPendingChanges] = useState<Map<number, string>>(new Map());
+
   const [activeTab, setActiveTab] = useState<string>('preview');
   const [showTemplates, setShowTemplates] = useState(false);
   const [showQuickStart, setShowQuickStart] = useState(false);
@@ -135,111 +132,7 @@ export default function IDE() {
     enabled: !!currentProjectId
   });
 
-  // Get files for current project
-  const { data: allFiles = [] } = useQuery<File[]>({
-    queryKey: ['/api/projects', currentProjectId, 'files'],
-    enabled: !!currentProjectId
-  });
-
-  // Save file mutation
-  const saveFileMutation = useMutation({
-    mutationFn: async ({ fileId, content }: { fileId: number; content: string }) => {
-      return apiRequest('PUT', `/api/files/${fileId}`, { content });
-    },
-    onSuccess: (_, { fileId }) => {
-      setPendingChanges(prev => {
-        const newMap = new Map(prev);
-        newMap.delete(fileId);
-        return newMap;
-      });
-      
-      setOpenFiles(prev => prev.map(file => 
-        file.id === fileId 
-          ? { ...file, content: pendingChanges.get(fileId) || file.content }
-          : file
-      ));
-      
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', currentProjectId, 'files'] });
-      toast({
-        title: "File saved",
-        description: "Your changes have been saved successfully."
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Save failed",
-        description: (error as Error).message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  // Auto-open first file
-  useEffect(() => {
-    if (allFiles.length > 0 && openFiles.length === 0) {
-      const firstFile = allFiles.find(f => !f.isDirectory);
-      if (firstFile) {
-        handleFileSelect(firstFile);
-      }
-    }
-  }, [allFiles]);
-
-  const handleFileSelect = (file: File) => {
-    if (!openFiles.find(f => f.id === file.id)) {
-      setOpenFiles(prev => [...prev, file]);
-    }
-    setActiveFileId(file.id);
-  };
-
-  const handleFileClose = (fileId: number) => {
-    setOpenFiles(prev => prev.filter(f => f.id !== fileId));
-    
-    if (activeFileId === fileId) {
-      const remainingFiles = openFiles.filter(f => f.id !== fileId);
-      setActiveFileId(remainingFiles.length > 0 ? remainingFiles[0].id : undefined);
-    }
-    
-    setPendingChanges(prev => {
-      const newMap = new Map(prev);
-      newMap.delete(fileId);
-      return newMap;
-    });
-  };
-
-  const handleFileChange = (fileId: number, content: string) => {
-    setPendingChanges(prev => new Map(prev).set(fileId, content));
-  };
-
-  const handleSaveFile = (fileId: number) => {
-    const content = pendingChanges.get(fileId);
-    if (content !== undefined) {
-      saveFileMutation.mutate({ fileId, content });
-    }
-  };
-
-  const handleSaveAll = () => {
-    pendingChanges.forEach((content, fileId) => {
-      saveFileMutation.mutate({ fileId, content });
-    });
-  };
-
-  const handleNewFile = () => {
-    toast({
-      title: "New file",
-      description: "Use the file explorer to create new files"
-    });
-  };
-
-  const handleOpenFile = () => {
-    toast({
-      title: "Open file",
-      description: "Use the file explorer to open files"
-    });
-  };
-
-  const activeFile = openFiles.find(f => f.id === activeFileId);
-  const currentCode = activeFile ? (pendingChanges.get(activeFile.id) || activeFile.content) : '';
-  const currentLanguage = activeFile?.language || 'javascript';
+  // File handling removed with Code tab
 
   const handleAppBuilding = (isBuilding: boolean, steps: string[], currentStep: number) => {
     setIsAppBuilding(isBuilding);
@@ -813,13 +706,7 @@ All code was generated directly by Perplexity AI based on your specific requirem
               <Play className="h-4 w-4 mr-2" />
               Live Preview
             </TabsTrigger>
-            <TabsTrigger 
-              value="code" 
-              className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
-            >
-              <Code2 className="h-4 w-4 mr-2" />
-              Code
-            </TabsTrigger>
+
             <TabsTrigger 
               value="database" 
               className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
@@ -855,55 +742,7 @@ All code was generated directly by Perplexity AI based on your specific requirem
               />
             </TabsContent>
 
-            <TabsContent value="code" className="flex flex-1 m-0 p-0">
-              <div className="flex flex-1 overflow-hidden">
-                {/* File Explorer */}
-                <div className={`transition-all duration-300 ${isExplorerCollapsed ? 'w-0' : 'w-64'} border-r border-editor-border bg-editor-surface`}>
-                  {!isExplorerCollapsed && (
-                    <div className="h-full flex flex-col">
-                      <div className="flex items-center justify-between p-3 border-b border-editor-border">
-                        <h3 className="text-sm font-medium text-editor-text">Explorer</h3>
-                        <button
-                          onClick={() => setIsExplorerCollapsed(true)}
-                          className="p-1 hover:bg-editor-bg rounded text-editor-text-dim hover:text-editor-text"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <div className="flex-1 overflow-hidden">
-                        <FileExplorer
-                          projectId={currentProjectId}
-                          onFileSelect={handleFileSelect}
-                          selectedFileId={activeFileId}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
 
-                {isExplorerCollapsed && (
-                  <div className="w-8 bg-editor-surface border-r border-editor-border flex flex-col items-center py-2">
-                    <button
-                      onClick={() => setIsExplorerCollapsed(false)}
-                      className="p-1 hover:bg-editor-bg rounded text-editor-text-dim hover:text-editor-text mb-2"
-                      title="Show Explorer"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
-                
-                <div className="flex-1">
-                  <CodeEditor
-                    openFiles={openFiles}
-                    activeFileId={activeFileId}
-                    onFileChange={handleFileChange}
-                    onFileClose={handleFileClose}
-                    onFileSelect={setActiveFileId}
-                  />
-                </div>
-              </div>
-            </TabsContent>
 
             <TabsContent value="database" className="flex-1 m-0 p-0">
               <DatabaseBuilder projectId={currentProjectId} />
