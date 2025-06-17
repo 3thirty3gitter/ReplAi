@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-// Lucide React icons inline definitions for standalone usage
+// Icon components for standalone usage
 const Bot = ({ className = "", ...props }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
     <path d="M12 8V4H8"/>
@@ -85,14 +85,13 @@ interface ChatHistory {
   messages: Message[];
 }
 
-export default function ChatInterface() {
+export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(true);
-  const [generatedFiles, setGeneratedFiles] = useState<any[]>([]);
   const messagesRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom
@@ -110,14 +109,16 @@ export default function ChatInterface() {
   const loadConversations = async () => {
     try {
       const response = await fetch('/api/conversations');
-      const conversations = await response.json();
-      setChatHistories(conversations);
+      if (response.ok) {
+        const conversations = await response.json();
+        setChatHistories(Array.isArray(conversations) ? conversations : []);
+      }
     } catch (error) {
       console.error('Failed to load conversations:', error);
+      setChatHistories([]);
     }
   };
 
-  // Create new chat
   const createNewChat = () => {
     const newChatId = `chat-${Date.now()}`;
     const newChat: ChatHistory = {
@@ -131,7 +132,6 @@ export default function ChatInterface() {
     setMessages([]);
   };
 
-  // Load existing chat
   const loadChat = (chatId: string) => {
     const chat = chatHistories.find(c => c.id === chatId);
     if (chat) {
@@ -140,7 +140,6 @@ export default function ChatInterface() {
     }
   };
 
-  // Save current chat
   const saveCurrentChat = async () => {
     if (currentChatId && messages.length > 0) {
       const title = messages[0]?.content.slice(0, 40) + '...' || 'New Chat';
@@ -167,7 +166,6 @@ export default function ChatInterface() {
     }
   };
 
-  // Delete chat
   const deleteChat = async (chatId: string) => {
     try {
       await fetch(`/api/conversations/${chatId}`, { method: 'DELETE' });
@@ -181,7 +179,6 @@ export default function ChatInterface() {
     }
   };
 
-  // Save chat when messages change
   useEffect(() => {
     const timer = setTimeout(() => {
       saveCurrentChat();
@@ -189,7 +186,6 @@ export default function ChatInterface() {
     return () => clearTimeout(timer);
   }, [messages]);
 
-  // Handle plan approval
   const handlePlanApproval = async (plan: any) => {
     setMessages(prev => prev.map(msg => 
       msg.plan === plan ? { ...msg, isWaitingForApproval: false } : msg
@@ -212,27 +208,26 @@ export default function ChatInterface() {
       const data = await response.json();
       
       if (data.success) {
-        setGeneratedFiles(data.files);
-        
         const successMessage: Message = {
           role: 'assistant',
-          content: `✅ Application built successfully!\n\nGenerated ${data.filesCreated} files:\n${data.files.map((f: any) => `• ${f.name}`).join('\n')}\n\n${data.instructions}`,
+          content: `✅ Application built successfully!\n\nGenerated ${data.filesCreated} files:\n${data.files?.map((f: any) => `• ${f.name}`).join('\n') || ''}\n\n${data.instructions || 'Your application is ready!'}`,
           timestamp: Date.now(),
           messageTitle: "Build Complete"
         };
         setMessages(prev => [...prev.slice(0, -1), successMessage]);
+      } else {
+        throw new Error(data.error || 'Generation failed');
       }
     } catch (error) {
       const errorMessage: Message = {
         role: 'assistant',
-        content: 'Failed to build application. Please try again.',
+        content: 'Failed to build application. Please try again or check your API configuration.',
         timestamp: Date.now()
       };
       setMessages(prev => [...prev.slice(0, -1), errorMessage]);
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -253,7 +248,6 @@ export default function ChatInterface() {
     setIsLoading(true);
 
     try {
-      // Check if this is an app building request
       const isAppRequest = currentInput.toLowerCase().includes('build') || 
                           currentInput.toLowerCase().includes('create') || 
                           currentInput.toLowerCase().includes('make') ||
@@ -293,13 +287,15 @@ export default function ChatInterface() {
           if (planData.success && planData.plan) {
             const planMessage: Message = {
               role: 'assistant',
-              content: "Here's the detailed plan I've created:",
+              content: "Here's the detailed plan I've created for your application:",
               timestamp: Date.now(),
               plan: planData.plan,
               isWaitingForApproval: true
             };
             setMessages(prev => [...prev, planMessage]);
           }
+        } else {
+          throw new Error(analysisData.error || 'Analysis failed');
         }
       } else {
         // Regular chat
@@ -318,13 +314,15 @@ export default function ChatInterface() {
             timestamp: Date.now()
           };
           setMessages(prev => [...prev, assistantMessage]);
+        } else {
+          throw new Error(data.error || 'Chat failed');
         }
       }
     } catch (error) {
       console.error('Chat error:', error);
       const errorMessage: Message = {
         role: 'assistant',
-        content: 'Sorry, there was an error processing your request. Please ensure your Perplexity API key is configured.',
+        content: 'There was an error processing your request. Please ensure your Perplexity API key is configured correctly.',
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, errorMessage]);

@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import Chat from '../replica-chat.tsx'
+import Chat from '../replica-client-chat'
 import './index.css'
 
 const queryClient = new QueryClient({

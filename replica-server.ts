@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import session from 'express-session';
 import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
@@ -7,11 +6,23 @@ import { eq } from 'drizzle-orm';
 import { conversations, projects, files } from './replica-schema.js';
 import type { Message } from './replica-schema.js';
 
+// CORS middleware implementation
+const cors = (req: any, res: any, next: any) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+};
+
 const app = express();
 const port = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors);
 app.use(express.json());
 app.use(session({
   secret: process.env.SESSION_SECRET || 'replica-secret-key',
