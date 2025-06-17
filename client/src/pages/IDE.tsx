@@ -52,7 +52,24 @@ export default function IDE() {
   const [showHelp, setShowHelp] = useState(false);
   const [showFileTree, setShowFileTree] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
-  const [aiMessages, setAIMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: number}>>([]);
+  const [aiMessages, setAIMessages] = useState<Array<{
+    role: 'user' | 'assistant', 
+    content: string, 
+    timestamp: number,
+    plan?: {
+      name: string;
+      description: string;
+      type: string;
+      features: string[];
+      technologies: string[];
+      preview: {
+        title: string;
+        description: string;
+        sections: string[];
+      };
+    },
+    isWaitingForApproval?: boolean;
+  }>>([]);
   const [aiInput, setAIInput] = useState('');
   const [isAppBuilding, setIsAppBuilding] = useState(false);
   const [buildingSteps, setBuildingSteps] = useState<string[]>([]);
@@ -192,6 +209,82 @@ export default function IDE() {
     setActiveTab('preview');
   };
 
+  // Generate plan from user input
+  const generateAppPlan = (userMessage: string) => {
+    const lowerMessage = userMessage.toLowerCase();
+    
+    if (lowerMessage.includes('surfboard') || lowerMessage.includes('surf')) {
+      return {
+        name: "SurfBoard Store",
+        description: "A professional e-commerce website for selling surfboards with modern design and full shopping functionality",
+        type: "E-commerce",
+        features: [
+          "Product catalog with surfboard listings",
+          "Individual product detail pages",
+          "Shopping cart functionality",
+          "Secure checkout process",
+          "Product search and filtering",
+          "Category browsing (longboards, shortboards, funboards)",
+          "Product image galleries",
+          "Inventory management",
+          "Customer reviews and ratings",
+          "Responsive mobile design"
+        ],
+        technologies: ["React", "TypeScript", "Tailwind CSS", "Express.js", "PostgreSQL"],
+        preview: {
+          title: "Wave Rider Surfboards",
+          description: "Ride the Wave - Premium surfboards crafted for every skill level. From beginners to pros, find your perfect board.",
+          sections: ["Hero Section", "Featured Products", "Shop by Category", "About Us", "Contact"]
+        }
+      };
+    }
+    
+    if (lowerMessage.includes('todo') || lowerMessage.includes('task')) {
+      return {
+        name: "Task Manager Pro",
+        description: "A comprehensive task management application with project organization and team collaboration features",
+        type: "Productivity",
+        features: [
+          "Create and manage tasks",
+          "Project organization",
+          "Priority levels and due dates",
+          "Progress tracking",
+          "Categories and tags",
+          "Search and filtering",
+          "Task completion analytics",
+          "Responsive design"
+        ],
+        technologies: ["React", "TypeScript", "Tailwind CSS", "Express.js", "PostgreSQL"],
+        preview: {
+          title: "TaskFlow",
+          description: "Organize your work and life with powerful task management",
+          sections: ["Dashboard", "Task Lists", "Projects", "Analytics"]
+        }
+      };
+    }
+    
+    // Default plan for general requests
+    return {
+      name: "Custom Web Application",
+      description: "A modern web application tailored to your specific requirements",
+      type: "Web Application",
+      features: [
+        "Responsive design",
+        "Modern UI components",
+        "Interactive functionality",
+        "Database integration",
+        "API endpoints",
+        "User-friendly interface"
+      ],
+      technologies: ["React", "TypeScript", "Tailwind CSS", "Express.js", "PostgreSQL"],
+      preview: {
+        title: "Your Custom App",
+        description: "A comprehensive solution built with modern technologies",
+        sections: ["Dashboard", "Main Features", "Settings"]
+      }
+    };
+  };
+
   // AI Chat handler
   const handleAISubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,34 +297,157 @@ export default function IDE() {
     };
 
     setAIMessages(prev => [...prev, userMessage]);
+    const currentInput = aiInput;
     setAIInput('');
     setIsAILoading(true);
 
     try {
-      const response = await apiRequest('POST', '/api/ai/chat', {
-        message: aiInput,
-        code: currentCode,
-        language: currentLanguage,
-        projectId: currentProjectId
-      });
+      // Check if this is an app building request
+      const isAppRequest = currentInput.toLowerCase().includes('build') || 
+                          currentInput.toLowerCase().includes('create') || 
+                          currentInput.toLowerCase().includes('make') ||
+                          currentInput.toLowerCase().includes('app') ||
+                          currentInput.toLowerCase().includes('website') ||
+                          currentInput.toLowerCase().includes('store') ||
+                          currentInput.toLowerCase().includes('todo') ||
+                          currentInput.toLowerCase().includes('task');
 
-      const data = await response.json();
+      if (isAppRequest) {
+        // Generate plan using Perplexity API
+        try {
+          const planResponse = await apiRequest('POST', '/api/ai/generate-plan', {
+            prompt: currentInput
+          });
+          
+          const planData = await planResponse.json();
+          
+          if (planData.success && planData.plan) {
+            const aiResponse = {
+              role: 'assistant' as const,
+              content: `I'll help you create ${planData.plan.description}. Let me analyze your requirements and develop a comprehensive plan for your ${planData.plan.type.toLowerCase()}.`,
+              timestamp: Date.now(),
+              plan: planData.plan,
+              isWaitingForApproval: true
+            };
+            setAIMessages(prev => [...prev, aiResponse]);
+          } else {
+            // Fallback to local plan generation if API fails
+            const plan = generateAppPlan(currentInput);
+            const aiResponse = {
+              role: 'assistant' as const,
+              content: `I'll help you create ${plan.description}. Let me analyze your requirements and develop a comprehensive plan for your ${plan.type.toLowerCase()}.`,
+              timestamp: Date.now(),
+              plan: plan,
+              isWaitingForApproval: true
+            };
+            setAIMessages(prev => [...prev, aiResponse]);
+          }
+        } catch (error) {
+          // Fallback to local plan generation if API fails
+          const plan = generateAppPlan(currentInput);
+          const aiResponse = {
+            role: 'assistant' as const,
+            content: `I'll help you create ${plan.description}. Let me analyze your requirements and develop a comprehensive plan for your ${plan.type.toLowerCase()}.`,
+            timestamp: Date.now(),
+            plan: plan,
+            isWaitingForApproval: true
+          };
+          setAIMessages(prev => [...prev, aiResponse]);
+        }
+      } else {
+        // Regular chat response
+        const response = await apiRequest('POST', '/api/ai/chat', {
+          message: currentInput,
+          code: currentCode,
+          language: currentLanguage,
+          projectId: currentProjectId
+        });
 
-      const aiResponse = {
-        role: 'assistant' as const,
-        content: data.message || 'I received your message but had trouble generating a response.',
-        timestamp: Date.now()
-      };
-      setAIMessages(prev => [...prev, aiResponse]);
+        const data = await response.json();
+
+        const aiResponse = {
+          role: 'assistant' as const,
+          content: data.message || 'I received your message but had trouble generating a response.',
+          timestamp: Date.now()
+        };
+        setAIMessages(prev => [...prev, aiResponse]);
+      }
     } catch (error) {
       const errorMessage = {
         role: 'assistant' as const,
-        content: 'Sorry, I encountered an error. Please make sure the OpenAI API key is configured.',
+        content: 'Sorry, I encountered an error. Please make sure the API keys are configured.',
         timestamp: Date.now()
       };
       setAIMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsAILoading(false);
+    }
+  };
+
+  // Handle plan approval and start building
+  const handlePlanApproval = async (plan: any) => {
+    setIsGenerating(true);
+    handleAppBuilding(true, [
+      "Analyzing requirements...",
+      "Designing app structure...",
+      "Creating React components...",
+      "Setting up database schema...",
+      "Implementing API endpoints...",
+      "Adding interactive features...",
+      "Optimizing performance...",
+      "Final testing and polish..."
+    ], 0);
+
+    try {
+      // Simulate building progress
+      const steps = [
+        "Analyzing requirements...",
+        "Designing app structure...",
+        "Creating React components...",
+        "Setting up database schema...",
+        "Implementing API endpoints...",
+        "Adding interactive features...",
+        "Optimizing performance...",
+        "Final testing and polish..."
+      ];
+
+      for (let i = 0; i < steps.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        handleAppBuilding(true, steps, i);
+      }
+
+      const response = await apiRequest('POST', '/api/ai/generate-project', {
+        prompt: `Create ${plan.description}`,
+        projectId: currentProjectId,
+        projectType: 'web',
+        framework: 'react',
+        includeTests: false
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.files?.length > 0) {
+        handleAppGenerated(data.files);
+        
+        const successMessage = {
+          role: 'assistant' as const,
+          content: `Application built successfully! Your ${plan.type.toLowerCase()} is ready with full functionality. Check out the live preview to see it in action.`,
+          timestamp: Date.now()
+        };
+        setAIMessages(prev => [...prev, successMessage]);
+      } else {
+        throw new Error('Failed to generate application');
+      }
+    } catch (error) {
+      const errorMessage = {
+        role: 'assistant' as const,
+        content: 'Sorry, I encountered an error while building the application. Please try again.',
+        timestamp: Date.now()
+      };
+      setAIMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsGenerating(false);
+      handleAppBuilding(false, [], 0);
     }
   };
 
@@ -291,6 +507,85 @@ export default function IDE() {
                       : 'bg-editor-bg text-editor-text border border-editor-border'
                   }`}>
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    
+                    {/* Plan Preview */}
+                    {message.plan && (
+                      <div className="mt-4 bg-editor-surface border border-editor-border rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <span className="text-white font-bold text-lg">{message.plan.name.charAt(0)}</span>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-editor-text">{message.plan.name}</h3>
+                            <p className="text-xs text-editor-text-dim">{message.plan.type}</p>
+                          </div>
+                        </div>
+                        
+                        <p className="text-sm text-editor-text-dim mb-4">{message.plan.description}</p>
+                        
+                        <div className="space-y-4">
+                          <div>
+                            <h4 className="text-sm font-medium text-editor-text mb-2">Key Features:</h4>
+                            <ul className="space-y-1">
+                              {message.plan.features.map((feature, idx) => (
+                                <li key={idx} className="text-xs text-editor-text-dim flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 bg-editor-primary rounded-full"></div>
+                                  {feature}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <div>
+                            <h4 className="text-sm font-medium text-editor-text mb-2">Technologies:</h4>
+                            <div className="flex flex-wrap gap-1">
+                              {message.plan.technologies.map((tech, idx) => (
+                                <span key={idx} className="px-2 py-1 bg-editor-bg border border-editor-border rounded text-xs text-editor-text">
+                                  {tech}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h4 className="text-sm font-medium text-editor-text mb-2">Preview:</h4>
+                            <div className="bg-editor-bg border border-editor-border rounded p-3">
+                              <h5 className="font-medium text-editor-text text-sm">{message.plan.preview.title}</h5>
+                              <p className="text-xs text-editor-text-dim mt-1">{message.plan.preview.description}</p>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {message.plan.preview.sections.map((section, idx) => (
+                                  <span key={idx} className="px-2 py-1 bg-editor-surface border border-editor-border rounded text-xs text-editor-text-dim">
+                                    {section}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {message.isWaitingForApproval && (
+                          <div className="flex gap-2 mt-4 pt-4 border-t border-editor-border">
+                            <button
+                              onClick={() => handlePlanApproval(message.plan)}
+                              className="flex-1 bg-editor-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-editor-primary/80 flex items-center justify-center gap-2"
+                            >
+                              <Play className="h-4 w-4" />
+                              Build This App
+                            </button>
+                            <button
+                              onClick={() => {
+                                setAIMessages(prev => prev.map(msg => 
+                                  msg === message ? { ...msg, isWaitingForApproval: false } : msg
+                                ));
+                              }}
+                              className="px-4 py-2 border border-editor-border text-editor-text rounded-md text-sm hover:bg-editor-surface"
+                            >
+                              Modify Plan
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
                 {message.role === 'user' && (

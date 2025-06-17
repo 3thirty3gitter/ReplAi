@@ -304,6 +304,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate app plan endpoint
+  app.post('/api/ai/generate-plan', async (req, res) => {
+    try {
+      const { prompt } = z.object({
+        prompt: z.string()
+      }).parse(req.body);
+
+      const { generateAppPlan } = await import('./services/perplexityService');
+      const plan = await generateAppPlan(prompt);
+
+      res.json({
+        success: true,
+        plan: plan
+      });
+    } catch (error) {
+      console.error('Plan generation error:', error);
+      res.status(500).json({
+        success: false,
+        message: (error as Error).message || "Failed to generate app plan"
+      });
+    }
+  });
+
   // AI Code Generation - Generate complete project files
   app.post('/api/ai/generate-project', async (req, res) => {
     try {
