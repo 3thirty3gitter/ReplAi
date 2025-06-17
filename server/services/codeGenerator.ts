@@ -3492,6 +3492,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
 }`;
 }
 
+function generateEcommerceSchema(): string {
+  return `import { pgTable, text, integer, decimal, timestamp, varchar } from "drizzle-orm/pg-core";
+
+export const products = pgTable("products", {
+  id: integer("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  category: varchar("category", { length: 100 }),
+  imageUrl: varchar("image_url", { length: 500 }),
+  stock: integer("stock").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const orders = pgTable("orders", {
+  id: integer("id").primaryKey(),
+  customerName: varchar("customer_name", { length: 255 }).notNull(),
+  customerEmail: varchar("customer_email", { length: 255 }).notNull(),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status", { length: 50 }).default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Product = typeof products.$inferSelect;
+export type Order = typeof orders.$inferSelect;`;
+}
+
+function generateEcommerceAPI(): string {
+  return `import { Router } from 'express';
+import { products, orders } from '../shared/schema';
+
+const router = Router();
+
+// Get all products
+router.get('/products', async (req, res) => {
+  try {
+    const allProducts = await db.select().from(products);
+    res.json(allProducts);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
+
+// Create order
+router.post('/orders', async (req, res) => {
+  try {
+    const { customerName, customerEmail, items, total } = req.body;
+    const order = await db.insert(orders).values({
+      customerName,
+      customerEmail,
+      total,
+    }).returning();
+    res.json(order[0]);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create order' });
+  }
+});
+
+export default router;`;
+}
+
+function generateDashboardApp(appName: string): string {
+  return generateAdvancedReactApp(`Create a dashboard application called ${appName}`, appName);
+}
+
+function generateDashboardSchema(): string {
+  return generateDynamicSchema("dashboard application with analytics and metrics");
+}
+
+function generateDashboardAPI(): string {
+  return generateDynamicAPI("dashboard application with analytics endpoints");
+}
+
+function generateDashboardHTML(appName: string): string {
+  return generateAdvancedReactApp(`Create a dashboard application called ${appName}`, appName);
+}
+
+function generateSaaSApp(appName: string): string {
+  return generateAdvancedReactApp(`Create a SaaS platform called ${appName}`, appName);
+}
+
+function generateSaaSSchema(): string {
+  return generateDynamicSchema("SaaS platform with user management and subscriptions");
+}
+
+function generateSaaSAPI(): string {
+  return generateDynamicAPI("SaaS platform with user and subscription endpoints");
+}
+
+function generateSaaSHTML(appName: string): string {
+  return generateAdvancedReactApp(`Create a SaaS platform called ${appName}`, appName);
+}
+
 function generateReactMain(): string {
   return `import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
