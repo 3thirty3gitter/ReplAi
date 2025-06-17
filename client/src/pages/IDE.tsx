@@ -51,6 +51,34 @@ export default function IDE() {
   const [showHelp, setShowHelp] = useState(false);
   const [showFileTree, setShowFileTree] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
+  // Chat history management
+  const [chatHistories, setChatHistories] = useState<Array<{
+    id: string;
+    title: string;
+    timestamp: number;
+    messages: Array<{
+      role: 'user' | 'assistant', 
+      content: string, 
+      timestamp: number,
+      plan?: {
+        name: string;
+        description: string;
+        type: string;
+        features: string[];
+        technologies: string[];
+        preview: {
+          title: string;
+          description: string;
+          sections: string[];
+        };
+      },
+      isWaitingForApproval?: boolean;
+      isAuditReport?: boolean;
+      isCollapsed?: boolean;
+      messageTitle?: string;
+    }>;
+  }>>([]);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [aiMessages, setAIMessages] = useState<Array<{
     role: 'user' | 'assistant', 
     content: string, 
@@ -76,6 +104,7 @@ export default function IDE() {
   const [aiPanelWidth, setAiPanelWidth] = useState(400);
   const [isResizing, setIsResizing] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
+  const [showChatHistory, setShowChatHistory] = useState(true);
   const chatMessagesRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when messages change
@@ -112,6 +141,56 @@ export default function IDE() {
       document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isResizing]);
+
+  // Chat history management functions
+  const createNewChat = () => {
+    const newChatId = `chat-${Date.now()}`;
+    const newChat = {
+      id: newChatId,
+      title: 'New Chat',
+      timestamp: Date.now(),
+      messages: []
+    };
+    setChatHistories(prev => [newChat, ...prev]);
+    setCurrentChatId(newChatId);
+    setAIMessages([]);
+  };
+
+  const loadChat = (chatId: string) => {
+    const chat = chatHistories.find(c => c.id === chatId);
+    if (chat) {
+      setCurrentChatId(chatId);
+      setAIMessages(chat.messages);
+    }
+  };
+
+  const saveCurrentChat = () => {
+    if (currentChatId && aiMessages.length > 0) {
+      setChatHistories(prev => prev.map(chat => 
+        chat.id === currentChatId 
+          ? { 
+              ...chat, 
+              messages: aiMessages,
+              title: aiMessages[0]?.content.slice(0, 50) + '...' || 'New Chat'
+            }
+          : chat
+      ));
+    }
+  };
+
+  const deleteChat = (chatId: string) => {
+    setChatHistories(prev => prev.filter(c => c.id !== chatId));
+    if (currentChatId === chatId) {
+      setCurrentChatId(null);
+      setAIMessages([]);
+    }
+  };
+
+  // Save chat whenever messages change
+  useEffect(() => {
+    saveCurrentChat();
+  }, [aiMessages]);
+
   const [isAppBuilding, setIsAppBuilding] = useState(false);
   const [buildingSteps, setBuildingSteps] = useState<string[]>([]);
   const [currentBuildStep, setCurrentBuildStep] = useState(0);
@@ -225,6 +304,11 @@ export default function IDE() {
   const handleAISubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!aiInput.trim() || isAILoading) return;
+
+    // Create new chat if none exists
+    if (!currentChatId) {
+      createNewChat();
+    }
 
     const userMessage = {
       role: 'user' as const,
@@ -480,9 +564,98 @@ All code was generated directly by Perplexity AI based on your specific requirem
           </div>
         </div>
         
-        {/* AI Chat Interface */}
-        <div className="flex-1 flex flex-col bg-editor-surface min-h-0">
-          <div ref={chatMessagesRef} className="flex-1 overflow-y-auto p-4 space-y-4 max-h-full">
+        {/* AI Chat Interface with History Sidebar */}
+        <div className="flex-1 flex bg-editor-surface min-h-0">
+          {/* Chat History Sidebar */}
+          {showChatHistory && (
+            <div className="w-64 border-r border-editor-border bg-editor-bg flex flex-col">
+              {/* Sidebar Header */}
+              <div className="p-3 border-b border-editor-border">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-editor-text">Chat History</h3>
+                  <button
+                    onClick={() => setShowChatHistory(false)}
+                    className="p-1 hover:bg-editor-surface rounded text-editor-text-dim hover:text-editor-text"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                </div>
+                <button
+                  onClick={createNewChat}
+                  className="w-full bg-editor-primary text-white px-3 py-2 rounded-md text-sm hover:bg-editor-primary/80 flex items-center justify-center gap-2"
+                >
+                  <Bot className="h-4 w-4" />
+                  New Chat
+                </button>
+              </div>
+
+              {/* Chat List */}
+              <div className="flex-1 overflow-y-auto">
+                {chatHistories.length === 0 ? (
+                  <div className="p-3 text-center text-editor-text-dim text-sm">
+                    No previous chats
+                  </div>
+                ) : (
+                  <div className="space-y-1 p-2">
+                    {chatHistories.map((chat) => (
+                      <button
+                        key={chat.id}
+                        onClick={() => loadChat(chat.id)}
+                        className={`w-full text-left p-3 rounded-md text-sm hover:bg-editor-surface transition-colors group ${
+                          currentChatId === chat.id ? 'bg-editor-surface border border-editor-border' : ''
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-editor-text font-medium truncate">
+                              {chat.title}
+                            </p>
+                            <p className="text-xs text-editor-text-dim">
+                              {new Date(chat.timestamp).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-editor-text-dim">
+                              {chat.messages.length} messages
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteChat(chat.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 rounded text-red-500 hover:text-red-700 transition-opacity"
+                          >
+                            <ChevronRight className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Main Chat Area */}
+          <div className="flex-1 flex flex-col">
+            {/* Chat Header */}
+            <div className="p-3 border-b border-editor-border bg-editor-bg flex items-center justify-between">
+              {!showChatHistory && (
+                <button
+                  onClick={() => setShowChatHistory(true)}
+                  className="p-1 hover:bg-editor-surface rounded text-editor-text-dim hover:text-editor-text"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              )}
+              <div className="flex items-center gap-2">
+                <Bot className="h-5 w-5 text-editor-primary" />
+                <span className="text-sm font-medium text-editor-text">AI Assistant</span>
+              </div>
+              <div className="w-6" /> {/* Spacer for alignment */}
+            </div>
+
+            {/* Chat Messages */}
+            <div ref={chatMessagesRef} className="flex-1 overflow-y-auto p-4 space-y-4 max-h-full">
             {aiMessages.length === 0 && (
               <div className="text-center text-editor-text-dim py-8">
                 <Bot className="h-12 w-12 mx-auto mb-4 text-editor-text-dim" />
@@ -656,8 +829,8 @@ All code was generated directly by Perplexity AI based on your specific requirem
             </form>
             <p className="text-xs text-editor-text-dim mt-2">Ask me to create any type of application</p>
           </div>
+          </div>
         </div>
-      </div>
       
       {/* Right Side - Main Content */}
       <div className="flex-1 flex flex-col">
