@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Toolbar } from "@/components/Toolbar";
@@ -71,11 +71,49 @@ export default function IDE() {
     isWaitingForApproval?: boolean;
   }>>([]);
   const [aiInput, setAIInput] = useState('');
+  const [aiPanelWidth, setAiPanelWidth] = useState(400);
+  const [isResizing, setIsResizing] = useState(false);
+  const [isAILoading, setIsAILoading] = useState(false);
+  const chatMessagesRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+    }
+  }, [aiMessages, isAILoading]);
+
+  // Handle resize functionality
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsResizing(true);
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      const newWidth = window.innerWidth - e.clientX;
+      setAiPanelWidth(Math.max(300, Math.min(800, newWidth)));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
   const [isAppBuilding, setIsAppBuilding] = useState(false);
   const [buildingSteps, setBuildingSteps] = useState<string[]>([]);
   const [currentBuildStep, setCurrentBuildStep] = useState(0);
   const [generatedAppFiles, setGeneratedAppFiles] = useState<Array<{name: string, content: string, language: string, path: string}>>([]);
-  const [isAILoading, setIsAILoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   
   const { toast } = useToast();
@@ -468,8 +506,18 @@ export default function IDE() {
 
   return (
     <div className="flex h-screen bg-editor-bg text-editor-text">
-      {/* Left Side - AI Assistant (Fixed Width) */}
-      <div className="w-96 border-r border-editor-border bg-editor-surface flex flex-col">
+      {/* Left Side - AI Assistant (Resizable) */}
+      <div 
+        className="border-r border-editor-border bg-editor-surface flex flex-col relative"
+        style={{ width: `${aiPanelWidth}px` }}
+      >
+        {/* Resize Handle */}
+        <div
+          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-editor-primary/20 transition-colors z-10 ${
+            isResizing ? 'bg-editor-primary/30' : ''
+          }`}
+          onMouseDown={handleMouseDown}
+        />
         {/* AI Assistant Header */}
         <div className="h-12 bg-editor-surface border-b border-editor-border flex items-center px-4 justify-between">
           <div className="flex items-center space-x-2">
