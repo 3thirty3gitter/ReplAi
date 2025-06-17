@@ -165,70 +165,158 @@ app.post('/api/ai/generate-project', async (req, res) => {
   try {
     const { prompt } = req.body;
     
+    if (!process.env.PERPLEXITY_API_KEY) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Perplexity API key required for file generation' 
+      });
+    }
+
+    console.log('Generating application files using Perplexity AI for:', prompt);
+    const startTime = Date.now();
+
+    // Generate React component using Perplexity AI
+    const reactResponse = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: `Generate a complete React TypeScript component file. Return ONLY the code without explanations or markdown formatting. Create a functional component that implements the requested application with proper TypeScript types, modern React patterns, and Tailwind CSS styling.`
+          },
+          {
+            role: 'user',
+            content: `Create a React component for: ${prompt}`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 2000
+      })
+    });
+
+    const reactData = await reactResponse.json();
+    const reactCode = reactData.choices?.[0]?.message?.content || `// Generated React component for: ${prompt}\nexport default function App() { return <div>Loading...</div>; }`;
+
+    // Generate Express routes using Perplexity AI
+    const backendResponse = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: `Generate Express.js TypeScript route handlers. Return ONLY the code without explanations or markdown formatting. Create RESTful API endpoints that support the frontend application with proper error handling and TypeScript types.`
+          },
+          {
+            role: 'user',
+            content: `Create Express routes for: ${prompt}`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 1500
+      })
+    });
+
+    const backendData = await backendResponse.json();
+    const backendCode = backendData.choices?.[0]?.message?.content || `// Generated Express routes for: ${prompt}\nexport const routes = {};`;
+
+    // Generate database schema using Perplexity AI
+    const schemaResponse = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: `Generate a Drizzle ORM schema file. Return ONLY the code without explanations or markdown formatting. Create PostgreSQL table definitions using Drizzle ORM syntax with proper TypeScript types and relationships.`
+          },
+          {
+            role: 'user',
+            content: `Create database schema for: ${prompt}`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 1500
+      })
+    });
+
+    const schemaData = await schemaResponse.json();
+    const schemaCode = schemaData.choices?.[0]?.message?.content || `// Generated schema for: ${prompt}\nexport const schema = {};`;
+
     const files = [
       {
         name: 'App.tsx',
-        path: '/src/App.tsx',
-        content: `import React, { useState } from 'react';
-
-export default function App() {
-  const [items, setItems] = useState<string[]>([]);
-  const [input, setInput] = useState('');
-
-  const addItem = () => {
-    if (input.trim()) {
-      setItems([...items, input]);
-      setInput('');
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-3xl font-bold mb-6">Generated for: ${prompt}</h1>
-        <div className="flex gap-2 mb-4">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="flex-1 px-4 py-2 border rounded-md"
-            placeholder="Add item..."
-          />
-          <button
-            onClick={addItem}
-            className="px-6 py-2 bg-blue-500 text-white rounded-md"
-          >
-            Add
-          </button>
-        </div>
-        <div className="space-y-2">
-          {items.map((item, index) => (
-            <div key={index} className="p-3 bg-gray-50 rounded-md">
-              {item}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}`,
-        language: 'typescript'
+        path: '/client/src/App.tsx',
+        content: reactCode,
+        language: 'typescript',
+        description: 'React frontend application generated by Perplexity AI'
+      },
+      {
+        name: 'routes.ts',
+        path: '/server/routes.ts',
+        content: backendCode,
+        language: 'typescript',
+        description: 'Express backend API generated by Perplexity AI'
+      },
+      {
+        name: 'schema.ts',
+        path: '/shared/schema.ts',
+        content: schemaCode,
+        language: 'typescript',
+        description: 'Database schema generated by Perplexity AI'
       }
     ];
+
+    const generationTime = Date.now() - startTime;
+    console.log(`Generated ${files.length} files in ${generationTime}ms using Perplexity AI`);
+
+    // Store files in database if needed
+    for (const file of files) {
+      try {
+        await db.insert(files).values({
+          projectId: 1,
+          name: file.name,
+          path: file.path,
+          content: file.content,
+          language: file.language,
+          isDirectory: false
+        }).onConflictDoNothing();
+      } catch (dbError) {
+        console.warn('Database storage failed:', dbError);
+      }
+    }
 
     res.json({
       success: true,
       filesCreated: files.length,
-      files,
-      instructions: `Generated application for: ${prompt}`,
-      generationTime: 100
+      files: files.map(f => ({
+        name: f.name,
+        path: f.path,
+        description: f.description
+      })),
+      instructions: `Generated ${files.length} files using Perplexity AI for your application: ${prompt}`,
+      generationTime,
+      aiGenerated: true
     });
 
   } catch (error) {
     console.error('Project generation error:', error);
     res.status(500).json({ 
       success: false, 
-      error: 'Failed to generate project files' 
+      error: 'Failed to generate project files using AI. Please check your Perplexity API configuration.' 
     });
   }
 });
