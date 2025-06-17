@@ -51,6 +51,7 @@ export default function IDE() {
   const [showHelp, setShowHelp] = useState(false);
   const [showFileTree, setShowFileTree] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
+  
   // Chat history management
   const [chatHistories, setChatHistories] = useState<Array<{
     id: string;
@@ -211,41 +212,105 @@ export default function IDE() {
     enabled: !!currentProjectId
   });
 
-  // File handling removed with Code tab
+  // Get files for current project
+  const { data: files = [] } = useQuery<File[]>({
+    queryKey: ['/api/files', currentProjectId],
+    enabled: !!currentProjectId
+  });
 
-  const handleAppBuilding = (isBuilding: boolean, steps: string[], currentStep: number) => {
-    setIsAppBuilding(isBuilding);
-    setBuildingSteps(steps);
-    setCurrentBuildStep(currentStep);
+  // Handle plan approval and start app generation
+  const handlePlanApproval = async (plan: any) => {
+    setIsAppBuilding(true);
+    setCurrentBuildStep(0);
+    setBuildingSteps([
+      "Initializing project structure...",
+      "Generating React components...",
+      "Setting up API endpoints...",
+      "Creating database schema...",
+      "Configuring authentication...",
+      "Finalizing deployment setup..."
+    ]);
+
+    // Remove approval waiting state from the message
+    setAIMessages(prev => prev.map(msg => 
+      msg.plan === plan ? { ...msg, isWaitingForApproval: false } : msg
+    ));
+
+    try {
+      // Call the actual file generation API
+      const response = await apiRequest('POST', '/api/ai/generate-project', {
+        prompt: plan.description,
+        projectId: currentProjectId,
+        projectType: 'web',
+        framework: 'react'
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setGeneratedAppFiles(data.files || []);
+        
+        // Add success message
+        const successMessage = {
+          role: 'assistant' as const,
+          content: `✅ Application built successfully! Generated ${data.filesCreated} files in ${data.generationTime}ms.\n\n${data.instructions}`,
+          timestamp: Date.now(),
+          isAuditReport: true,
+          messageTitle: "Build Complete - Audit Report"
+        };
+        setAIMessages(prev => [...prev, successMessage]);
+        
+        toast({
+          title: "Application Built Successfully!",
+          description: `Generated ${data.filesCreated} files for your project.`,
+        });
+        
+        // Refresh file list
+        queryClient.invalidateQueries({ queryKey: ['/api/files', currentProjectId] });
+      } else {
+        throw new Error(data.error || 'Failed to generate application');
+      }
+    } catch (error) {
+      console.error('Error generating app:', error);
+      const errorMessage = {
+        role: 'assistant' as const,
+        content: `❌ There was an error building your application. Please try again.`,
+        timestamp: Date.now()
+      };
+      setAIMessages(prev => [...prev, errorMessage]);
+      
+      toast({
+        title: "Build Failed",
+        description: "There was an error generating your application. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAppBuilding(false);
+      setCurrentBuildStep(0);
+      setBuildingSteps([]);
+    }
   };
 
-  const handleAppGenerated = (files: Array<{name: string, content: string, language: string, path: string}>) => {
-    setGeneratedAppFiles(files);
-    setActiveTab('preview');
-  };
-
-  // Generate plan from user input
-  const generateAppPlan = (userMessage: string) => {
-    const lowerMessage = userMessage.toLowerCase();
+  // Generate app plan based on prompt
+  const generateAppPlan = (prompt: string) => {
+    const lowerMessage = prompt.toLowerCase();
     
     if (lowerMessage.includes('surfboard') || lowerMessage.includes('surf')) {
       return {
-        name: "SurfBoard Store",
-        description: "A professional e-commerce website for selling surfboards with modern design and full shopping functionality",
+        name: "Wave Rider Surfboards",
+        description: "A premium e-commerce platform for selling surfboards with customization options and secure payments",
         type: "E-commerce",
         features: [
-          "Product catalog with surfboard listings",
-          "Individual product detail pages",
-          "Shopping cart functionality",
-          "Secure checkout process",
-          "Product search and filtering",
-          "Category browsing (longboards, shortboards, funboards)",
-          "Product image galleries",
-          "Inventory management",
+          "Product catalog with filtering",
+          "Surfboard customization tool",
+          "Secure payment processing",
+          "User accounts and order history",
+          "Responsive design for all devices",
+          "Admin dashboard for inventory",
           "Customer reviews and ratings",
-          "Responsive mobile design"
+          "Shipping calculator"
         ],
-        technologies: ["React", "TypeScript", "Tailwind CSS", "Express.js", "PostgreSQL"],
+        technologies: ["React", "TypeScript", "Tailwind CSS", "Express.js", "PostgreSQL", "Stripe"],
         preview: {
           title: "Wave Rider Surfboards",
           description: "Ride the Wave - Premium surfboards crafted for every skill level. From beginners to pros, find your perfect board.",
@@ -408,20 +473,18 @@ export default function IDE() {
         });
 
         const data = await response.json();
-
-        const aiResponse = {
+        const assistantMessage = {
           role: 'assistant' as const,
-          content: data.message || 'I received your message but had trouble generating a response.',
-          timestamp: Date.now(),
-          isCollapsed: true,
-          messageTitle: "Response & Recommendations"
+          content: data.message || "I'm here to help you build applications. What would you like to create?",
+          timestamp: Date.now()
         };
-        setAIMessages(prev => [...prev, aiResponse]);
+        setAIMessages(prev => [...prev, assistantMessage]);
       }
     } catch (error) {
+      console.error('Error in AI chat:', error);
       const errorMessage = {
         role: 'assistant' as const,
-        content: 'Sorry, I encountered an error. Please make sure the API keys are configured.',
+        content: "I'm sorry, there was an error processing your request. Please try again.",
         timestamp: Date.now()
       };
       setAIMessages(prev => [...prev, errorMessage]);
@@ -429,111 +492,6 @@ export default function IDE() {
       setIsAILoading(false);
     }
   };
-
-  // Handle plan approval and start building
-  const handlePlanApproval = async (plan: any) => {
-    setIsGenerating(true);
-    handleAppBuilding(true, [
-      "Analyzing requirements...",
-      "Designing app structure...",
-      "Creating React components...",
-      "Setting up database schema...",
-      "Implementing API endpoints...",
-      "Adding interactive features...",
-      "Optimizing performance...",
-      "Final testing and polish..."
-    ], 0);
-
-    try {
-      // Simulate building progress
-      const steps = [
-        "Analyzing requirements...",
-        "Designing app structure...",
-        "Creating React components...",
-        "Setting up database schema...",
-        "Implementing API endpoints...",
-        "Adding interactive features...",
-        "Optimizing performance...",
-        "Final testing and polish..."
-      ];
-
-      for (let i = 0; i < steps.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        handleAppBuilding(true, steps, i);
-      }
-
-      const response = await apiRequest('POST', '/api/ai/generate-project', {
-        prompt: `Create ${plan.description}`,
-        projectId: currentProjectId,
-        projectType: 'web',
-        framework: 'react',
-        includeTests: false
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.files?.length > 0) {
-        handleAppGenerated(data.files);
-        
-        // Display detailed audit information
-        const auditMessage = {
-          role: 'assistant' as const,
-          content: `**Build Process Complete**
-
-Your application has been successfully built using Perplexity AI. Here are the technical details:
-
-**Generation Summary:**
-• Files Created: ${data.filesCreated} (all generated by Perplexity AI)
-• Total Time: ${data.generationTime}ms
-• Code Lines: ${data.realTimeAnalysis?.totalCodeLines || 'N/A'}
-• Generation Speed: ${data.realTimeAnalysis?.generationSpeed || 'N/A'}
-• Generation Method: Pure Perplexity AI (no templates)
-
-**Detailed Audit Log:**
-${data.auditLog?.join('\n') || 'No audit log available'}
-
-**System Status:**
-✓ Template-based generation: DISABLED
-✓ Fallback systems: DISABLED  
-✓ Pure Perplexity AI generation: ACTIVE
-✓ Custom code generation: ${data.generationTime}ms response time
-
-All code was generated directly by Perplexity AI based on your specific requirements. No pre-written templates or fallback systems were used.`,
-          timestamp: Date.now(),
-          isAuditReport: true,
-          isCollapsed: true,
-          messageTitle: "Build Complete - Technical Details"
-        };
-        setAIMessages(prev => [...prev, auditMessage]);
-      } else {
-        throw new Error('Failed to generate application');
-      }
-    } catch (error) {
-      const errorMessage = {
-        role: 'assistant' as const,
-        content: 'Sorry, I encountered an error while building the application. Please try again.',
-        timestamp: Date.now()
-      };
-      setAIMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsGenerating(false);
-      handleAppBuilding(false, [], 0);
-    }
-  };
-
-  if (showTemplates) {
-    return (
-      <ProjectTemplates
-        onSelectTemplate={(template) => {
-          setShowTemplates(false);
-          toast({
-            title: "Template selected",
-            description: `Creating project from ${template.name} template`
-          });
-        }}
-      />
-    );
-  }
 
   return (
     <div className="flex h-screen bg-editor-bg text-editor-text">
@@ -544,23 +502,26 @@ All code was generated directly by Perplexity AI based on your specific requirem
       >
         {/* Resize Handle */}
         <div
-          className={`absolute top-0 right-0 w-2 h-full cursor-col-resize bg-transparent hover:bg-editor-primary/20 transition-colors z-30 ${
-            isResizing ? 'bg-editor-primary/30' : ''
-          }`}
+          className="absolute top-0 right-0 w-1 h-full cursor-col-resize bg-editor-border hover:bg-editor-primary transition-colors z-10"
           onMouseDown={handleMouseDown}
         />
         
-        {/* Resize Visual Indicator */}
-        <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-1 h-8 bg-editor-border rounded-l opacity-50 z-20" />
-        {/* AI Assistant Header */}
-        <div className="h-12 bg-editor-surface border-b border-editor-border flex items-center px-4 justify-between">
-          <div className="flex items-center space-x-2">
-            <Bot className="h-5 w-5 text-editor-primary" />
-            <h2 className="text-sm font-semibold text-editor-text">AI Assistant</h2>
-          </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-xs text-editor-text-dim">Ready</span>
+        {/* AI Panel Header */}
+        <div className="p-3 border-b border-editor-border bg-editor-bg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                <Bot className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-editor-text">AI Assistant</h2>
+                <p className="text-xs text-editor-text-dim">Powered by Perplexity</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-xs text-editor-text-dim">Ready</span>
+            </div>
           </div>
         </div>
         
@@ -656,181 +617,182 @@ All code was generated directly by Perplexity AI based on your specific requirem
 
             {/* Chat Messages */}
             <div ref={chatMessagesRef} className="flex-1 overflow-y-auto p-4 space-y-4 max-h-full">
-            {aiMessages.length === 0 && (
-              <div className="text-center text-editor-text-dim py-8">
-                <Bot className="h-12 w-12 mx-auto mb-4 text-editor-text-dim" />
-                <p className="text-lg font-medium mb-2 text-editor-text">AI Assistant Ready</p>
-                <p className="text-sm text-editor-text-dim">Ask me to create any type of application and I'll help you build it step by step.</p>
-              </div>
-            )}
-            
-            {aiMessages.map((message, index) => (
-              <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                {message.role === 'assistant' && (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                    <Bot className="h-4 w-4 text-white" />
-                  </div>
-                )}
-                <div className={`max-w-[80%] ${message.role === 'user' ? 'order-1' : ''}`}>
-                  <div className={`rounded-lg ${
-                    message.role === 'user' 
-                      ? 'bg-editor-primary text-white ml-auto p-3' 
-                      : 'bg-editor-bg text-editor-text border border-editor-border'
-                  }`}>
-                    {message.messageTitle ? (
-                      <div>
-                        <button
-                          onClick={() => {
-                            setAIMessages(prev => prev.map(msg => 
-                              msg === message ? { ...msg, isCollapsed: !msg.isCollapsed } : msg
-                            ));
-                          }}
-                          className="w-full flex items-center justify-between p-3 text-left hover:bg-editor-surface"
-                        >
-                          <span className="text-sm font-medium text-editor-text">{message.messageTitle}</span>
-                          {message.isCollapsed ? (
-                            <ChevronDown className="h-4 w-4 text-editor-text-dim" />
-                          ) : (
-                            <ChevronUp className="h-4 w-4 text-editor-text-dim" />
+              {aiMessages.length === 0 && (
+                <div className="text-center text-editor-text-dim py-8">
+                  <Bot className="h-12 w-12 mx-auto mb-4 text-editor-text-dim" />
+                  <p className="text-lg font-medium mb-2 text-editor-text">AI Assistant Ready</p>
+                  <p className="text-sm text-editor-text-dim">Ask me to create any type of application and I'll help you build it step by step.</p>
+                </div>
+              )}
+              
+              {aiMessages.map((message, index) => (
+                <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {message.role === 'assistant' && (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                      <Bot className="h-4 w-4 text-white" />
+                    </div>
+                  )}
+                  <div className={`max-w-[80%] ${message.role === 'user' ? 'order-1' : ''}`}>
+                    <div className={`rounded-lg ${
+                      message.role === 'user' 
+                        ? 'bg-editor-primary text-white ml-auto p-3' 
+                        : 'bg-editor-bg text-editor-text border border-editor-border'
+                    }`}>
+                      {message.messageTitle ? (
+                        <div>
+                          <button
+                            onClick={() => {
+                              setAIMessages(prev => prev.map(msg => 
+                                msg === message ? { ...msg, isCollapsed: !msg.isCollapsed } : msg
+                              ));
+                            }}
+                            className="w-full flex items-center justify-between p-3 text-left hover:bg-editor-surface"
+                          >
+                            <span className="text-sm font-medium text-editor-text">{message.messageTitle}</span>
+                            {message.isCollapsed ? (
+                              <ChevronDown className="h-4 w-4 text-editor-text-dim" />
+                            ) : (
+                              <ChevronUp className="h-4 w-4 text-editor-text-dim" />
+                            )}
+                          </button>
+                          {!message.isCollapsed && (
+                            <div className="px-3 pb-3">
+                              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                            </div>
                           )}
-                        </button>
-                        {!message.isCollapsed && (
-                          <div className="px-3 pb-3">
-                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="p-3">
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                      </div>
-                    )}
-                    
-                    {/* Plan Preview */}
-                    {message.plan && (
-                      <div className="mt-4 bg-editor-surface border border-editor-border rounded-lg p-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-lg">{message.plan.name.charAt(0)}</span>
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-editor-text">{message.plan.name}</h3>
-                            <p className="text-xs text-editor-text-dim">{message.plan.type}</p>
-                          </div>
                         </div>
-                        
-                        <p className="text-sm text-editor-text-dim mb-4">{message.plan.description}</p>
-                        
-                        <div className="space-y-4">
-                          <div>
-                            <h4 className="text-sm font-medium text-editor-text mb-2">Key Features:</h4>
-                            <ul className="space-y-1">
-                              {message.plan.features.map((feature, idx) => (
-                                <li key={idx} className="text-xs text-editor-text-dim flex items-center gap-2">
-                                  <div className="w-1.5 h-1.5 bg-editor-primary rounded-full"></div>
-                                  {feature}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                          
-                          <div>
-                            <h4 className="text-sm font-medium text-editor-text mb-2">Technologies:</h4>
-                            <div className="flex flex-wrap gap-1">
-                              {message.plan.technologies.map((tech, idx) => (
-                                <span key={idx} className="px-2 py-1 bg-editor-bg border border-editor-border rounded text-xs text-editor-text">
-                                  {tech}
-                                </span>
-                              ))}
+                      ) : (
+                        <div className="p-3">
+                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        </div>
+                      )}
+                      
+                      {/* Plan Preview */}
+                      {message.plan && (
+                        <div className="mt-4 bg-editor-surface border border-editor-border rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                              <span className="text-white font-bold text-lg">{message.plan.name.charAt(0)}</span>
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-editor-text">{message.plan.name}</h3>
+                              <p className="text-xs text-editor-text-dim">{message.plan.type}</p>
                             </div>
                           </div>
                           
-                          <div>
-                            <h4 className="text-sm font-medium text-editor-text mb-2">Preview:</h4>
-                            <div className="bg-editor-bg border border-editor-border rounded p-3">
-                              <h5 className="font-medium text-editor-text text-sm">{message.plan.preview.title}</h5>
-                              <p className="text-xs text-editor-text-dim mt-1">{message.plan.preview.description}</p>
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {message.plan.preview.sections.map((section, idx) => (
-                                  <span key={idx} className="px-2 py-1 bg-editor-surface border border-editor-border rounded text-xs text-editor-text-dim">
-                                    {section}
+                          <p className="text-sm text-editor-text-dim mb-4">{message.plan.description}</p>
+                          
+                          <div className="space-y-4">
+                            <div>
+                              <h4 className="text-sm font-medium text-editor-text mb-2">Key Features:</h4>
+                              <ul className="space-y-1">
+                                {message.plan.features.map((feature, idx) => (
+                                  <li key={idx} className="text-xs text-editor-text-dim flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 bg-editor-primary rounded-full"></div>
+                                    {feature}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                            
+                            <div>
+                              <h4 className="text-sm font-medium text-editor-text mb-2">Technologies:</h4>
+                              <div className="flex flex-wrap gap-1">
+                                {message.plan.technologies.map((tech, idx) => (
+                                  <span key={idx} className="px-2 py-1 bg-editor-bg border border-editor-border rounded text-xs text-editor-text">
+                                    {tech}
                                   </span>
                                 ))}
                               </div>
                             </div>
+                            
+                            <div>
+                              <h4 className="text-sm font-medium text-editor-text mb-2">Preview:</h4>
+                              <div className="bg-editor-bg border border-editor-border rounded p-3">
+                                <h5 className="font-medium text-editor-text text-sm">{message.plan.preview.title}</h5>
+                                <p className="text-xs text-editor-text-dim mt-1">{message.plan.preview.description}</p>
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {message.plan.preview.sections.map((section, idx) => (
+                                    <span key={idx} className="px-2 py-1 bg-editor-surface border border-editor-border rounded text-xs text-editor-text-dim">
+                                      {section}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
                           </div>
+                          
+                          {message.isWaitingForApproval && (
+                            <div className="flex gap-2 mt-4 pt-4 border-t border-editor-border">
+                              <button
+                                onClick={() => handlePlanApproval(message.plan)}
+                                className="flex-1 bg-editor-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-editor-primary/80 flex items-center justify-center gap-2"
+                              >
+                                <Play className="h-4 w-4" />
+                                Build This App
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setAIMessages(prev => prev.map(msg => 
+                                    msg === message ? { ...msg, isWaitingForApproval: false } : msg
+                                  ));
+                                }}
+                                className="px-4 py-2 border border-editor-border text-editor-text rounded-md text-sm hover:bg-editor-surface"
+                              >
+                                Modify Plan
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        
-                        {message.isWaitingForApproval && (
-                          <div className="flex gap-2 mt-4 pt-4 border-t border-editor-border">
-                            <button
-                              onClick={() => handlePlanApproval(message.plan)}
-                              className="flex-1 bg-editor-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-editor-primary/80 flex items-center justify-center gap-2"
-                            >
-                              <Play className="h-4 w-4" />
-                              Build This App
-                            </button>
-                            <button
-                              onClick={() => {
-                                setAIMessages(prev => prev.map(msg => 
-                                  msg === message ? { ...msg, isWaitingForApproval: false } : msg
-                                ));
-                              }}
-                              className="px-4 py-2 border border-editor-border text-editor-text rounded-md text-sm hover:bg-editor-surface"
-                            >
-                              Modify Plan
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                      )}
+                    </div>
+                  </div>
+                  {message.role === 'user' && (
+                    <div className="w-8 h-8 rounded-full bg-editor-text-dim flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-xs font-medium">U</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {isAILoading && (
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="bg-editor-bg border border-editor-border rounded-lg p-3">
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin h-4 w-4 border-2 border-editor-primary border-t-transparent rounded-full"></div>
+                      <span className="text-sm text-editor-text-dim">Thinking...</span>
+                    </div>
                   </div>
                 </div>
-                {message.role === 'user' && (
-                  <div className="w-8 h-8 rounded-full bg-editor-text-dim flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xs font-medium">U</span>
-                  </div>
-                )}
-              </div>
-            ))}
+              )}
+            </div>
             
-            {isAILoading && (
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                  <Bot className="h-4 w-4 text-white" />
-                </div>
-                <div className="bg-editor-bg border border-editor-border rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin h-4 w-4 border-2 border-editor-primary border-t-transparent rounded-full"></div>
-                    <span className="text-sm text-editor-text-dim">Thinking...</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="p-4 border-t border-editor-border bg-editor-bg">
-            <form id="ai-form" onSubmit={handleAISubmit} className="flex gap-2">
-              <input
-                type="text"
-                value={aiInput}
-                onChange={(e) => setAIInput(e.target.value)}
-                placeholder="Ask me to create an application..."
-                className="flex-1 px-3 py-2 bg-editor-surface border border-editor-border rounded-md text-editor-text placeholder:text-editor-text-dim focus:outline-none focus:ring-2 focus:ring-editor-primary"
-                disabled={isAILoading}
-              />
-              <button
-                type="submit"
-                disabled={!aiInput.trim() || isAILoading}
-                className="px-4 py-2 bg-editor-primary text-white rounded-md hover:bg-editor-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </form>
-            <p className="text-xs text-editor-text-dim mt-2">Ask me to create any type of application</p>
-          </div>
+            <div className="p-4 border-t border-editor-border bg-editor-bg">
+              <form id="ai-form" onSubmit={handleAISubmit} className="flex gap-2">
+                <input
+                  type="text"
+                  value={aiInput}
+                  onChange={(e) => setAIInput(e.target.value)}
+                  placeholder="Ask me to create an application..."
+                  className="flex-1 px-3 py-2 bg-editor-surface border border-editor-border rounded-md text-editor-text placeholder:text-editor-text-dim focus:outline-none focus:ring-2 focus:ring-editor-primary"
+                  disabled={isAILoading}
+                />
+                <button
+                  type="submit"
+                  disabled={!aiInput.trim() || isAILoading}
+                  className="px-4 py-2 bg-editor-primary text-white rounded-md hover:bg-editor-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </form>
+              <p className="text-xs text-editor-text-dim mt-2">Ask me to create any type of application</p>
+            </div>
           </div>
         </div>
+      </div>
       
       {/* Right Side - Main Content */}
       <div className="flex-1 flex flex-col">
@@ -909,8 +871,6 @@ All code was generated directly by Perplexity AI based on your specific requirem
                 generatedFiles={generatedAppFiles}
               />
             </TabsContent>
-
-
 
             <TabsContent value="database" className="flex-1 m-0 p-0">
               <DatabaseBuilder projectId={currentProjectId} />
