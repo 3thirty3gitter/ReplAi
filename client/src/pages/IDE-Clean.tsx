@@ -152,15 +152,7 @@ export default function IDE() {
         </div>
         
         <div className="flex-1">
-          <AIAssistant
-            projectId={currentProjectId}
-            isOpen={true}
-            onClose={() => {}}
-            currentCode={currentCode}
-            currentLanguage={currentLanguage}
-            onAppBuilding={handleAppBuilding}
-            onAppGenerated={handleAppGenerated}
-          />
+          {/* Removed duplicate AI Assistant - using the one in the main IDE */}
         </div>
       </div>
       

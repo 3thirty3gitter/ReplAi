@@ -40,7 +40,7 @@ import {
 import type { Project, File } from "@shared/schema";
 
 export default function IDE() {
-  const [currentProjectId, setCurrentProjectId] = useState<number>(1); // Default project
+  const [currentProjectId, setCurrentProjectId] = useState<number>(1);
   const [openFiles, setOpenFiles] = useState<File[]>([]);
   const [activeFileId, setActiveFileId] = useState<number | undefined>();
   const [isExplorerCollapsed, setIsExplorerCollapsed] = useState(false);
@@ -52,7 +52,7 @@ export default function IDE() {
   const [showHelp, setShowHelp] = useState(false);
   const [showFileTree, setShowFileTree] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
-  const [aiMessages, setAIMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: number, actions?: Array<{type: 'generate-project' | 'generate-file', label: string, data: any}>}>>([]);
+  const [aiMessages, setAIMessages] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: number}>>([]);
   const [aiInput, setAIInput] = useState('');
   const [isAppBuilding, setIsAppBuilding] = useState(false);
   const [buildingSteps, setBuildingSteps] = useState<string[]>([]);
@@ -87,14 +87,12 @@ export default function IDE() {
       return apiRequest('PUT', `/api/files/${fileId}`, { content });
     },
     onSuccess: (_, { fileId }) => {
-      // Remove from pending changes
       setPendingChanges(prev => {
         const newMap = new Map(prev);
         newMap.delete(fileId);
         return newMap;
       });
       
-      // Update file in openFiles
       setOpenFiles(prev => prev.map(file => 
         file.id === fileId 
           ? { ...file, content: pendingChanges.get(fileId) || file.content }
@@ -127,7 +125,6 @@ export default function IDE() {
   }, [allFiles]);
 
   const handleFileSelect = (file: File) => {
-    // Add to open files if not already open
     if (!openFiles.find(f => f.id === file.id)) {
       setOpenFiles(prev => [...prev, file]);
     }
@@ -137,13 +134,11 @@ export default function IDE() {
   const handleFileClose = (fileId: number) => {
     setOpenFiles(prev => prev.filter(f => f.id !== fileId));
     
-    // If closing active file, switch to another open file
     if (activeFileId === fileId) {
       const remainingFiles = openFiles.filter(f => f.id !== fileId);
       setActiveFileId(remainingFiles.length > 0 ? remainingFiles[0].id : undefined);
     }
     
-    // Remove from pending changes
     setPendingChanges(prev => {
       const newMap = new Map(prev);
       newMap.delete(fileId);
@@ -152,19 +147,13 @@ export default function IDE() {
   };
 
   const handleFileChange = (fileId: number, content: string) => {
-    // Update pending changes
     setPendingChanges(prev => new Map(prev).set(fileId, content));
-    
-    // Update open file content immediately for UI responsiveness
-    setOpenFiles(prev => prev.map(file => 
-      file.id === fileId ? { ...file, content } : file
-    ));
   };
 
-  const handleSaveFile = () => {
-    if (activeFileId && pendingChanges.has(activeFileId)) {
-      const content = pendingChanges.get(activeFileId)!;
-      saveFileMutation.mutate({ fileId: activeFileId, content });
+  const handleSaveFile = (fileId: number) => {
+    const content = pendingChanges.get(fileId);
+    if (content !== undefined) {
+      saveFileMutation.mutate({ fileId, content });
     }
   };
 
@@ -174,35 +163,14 @@ export default function IDE() {
     });
   };
 
-  const handleRunCode = () => {
-    const activeFile = openFiles.find(f => f.id === activeFileId);
-    if (!activeFile) {
-      toast({
-        title: "No file selected",
-        description: "Please select a file to run",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const content = pendingChanges.get(activeFile.id) || activeFile.content;
-    
-    // Use the terminal's run function
-    if ((window as any).terminalRunCode) {
-      (window as any).terminalRunCode(content, activeFile.language);
-    }
-  };
-
   const handleNewFile = () => {
-    // For now, just show a toast - could implement a modal for file creation
     toast({
-      title: "Create new file",
+      title: "New file",
       description: "Use the file explorer to create new files"
     });
   };
 
   const handleOpenFile = () => {
-    // For now, just show a toast - could implement file browser
     toast({
       title: "Open file",
       description: "Use the file explorer to open files"
@@ -221,7 +189,6 @@ export default function IDE() {
 
   const handleAppGenerated = (files: Array<{name: string, content: string, language: string, path: string}>) => {
     setGeneratedAppFiles(files);
-    // Switch to preview tab to show the generated app
     setActiveTab('preview');
   };
 
@@ -250,26 +217,10 @@ export default function IDE() {
 
       const data = await response.json();
 
-      // Analyze the response to determine if it's a code generation request
-      const isCodeRequest = /create|build|generate|make|develop|write.*app|write.*component|write.*function|todo|calculator|game|website|landing|portfolio/i.test(aiInput);
-      const actions = isCodeRequest ? [
-        {
-          type: 'generate-project' as const,
-          label: 'Generate Complete Project',
-          data: { prompt: aiInput, projectType: 'web', framework: 'react' }
-        },
-        {
-          type: 'generate-file' as const,
-          label: 'Generate Single File',
-          data: { prompt: aiInput, language: 'javascript' }
-        }
-      ] : undefined;
-
       const aiResponse = {
         role: 'assistant' as const,
         content: data.message || 'I received your message but had trouble generating a response.',
-        timestamp: Date.now(),
-        actions
+        timestamp: Date.now()
       };
       setAIMessages(prev => [...prev, aiResponse]);
     } catch (error) {
@@ -284,134 +235,10 @@ export default function IDE() {
     }
   };
 
-  // AI Action Handlers
-  const handleGenerateProject = async (actionData: any) => {
-    setIsGenerating(true);
-    try {
-      const response = await apiRequest('POST', '/api/ai/generate-project', {
-        prompt: actionData.prompt,
-        projectId: currentProjectId,
-        projectType: actionData.projectType,
-        framework: actionData.framework
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Refresh the file explorer to show new files
-        queryClient.invalidateQueries({ queryKey: ['/api/projects', currentProjectId, 'files'] });
-        
-        const successMessage = {
-          role: 'assistant' as const,
-          content: `✅ Successfully generated ${data.filesCreated} files!\n\n**Files created:**\n${data.files.map((f: any) => `• ${f.name} - ${f.description}`).join('\n')}\n\n**Instructions:**\n${data.instructions}\n\n**Next steps:**\n${data.nextSteps.map((step: string, i: number) => `${i + 1}. ${step}`).join('\n')}`,
-          timestamp: Date.now()
-        };
-        setAIMessages(prev => [...prev, successMessage]);
-
-        toast({
-          title: "Project Generated",
-          description: `Created ${data.filesCreated} files successfully`,
-        });
-      } else {
-        throw new Error('Generation failed');
-      }
-    } catch (error) {
-      const errorMessage = {
-        role: 'assistant' as const,
-        content: `❌ Failed to generate project: ${(error as Error).message}`,
-        timestamp: Date.now()
-      };
-      setAIMessages(prev => [...prev, errorMessage]);
-
-      toast({
-        title: "Generation Failed",
-        description: (error as Error).message,
-        variant: "destructive"
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleGenerateFile = async (actionData: any) => {
-    setIsGenerating(true);
-    try {
-      const response = await apiRequest('POST', '/api/ai/generate-file', {
-        prompt: actionData.prompt,
-        projectId: currentProjectId,
-        language: actionData.language
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Refresh the file explorer to show new file
-        queryClient.invalidateQueries({ queryKey: ['/api/projects', currentProjectId, 'files'] });
-        
-        const successMessage = {
-          role: 'assistant' as const,
-          content: `✅ Successfully generated file: **${data.file.name}**\n\nPath: ${data.file.path}\nDescription: ${data.file.description}\n\nThe file has been added to your project and is ready to use!`,
-          timestamp: Date.now()
-        };
-        setAIMessages(prev => [...prev, successMessage]);
-
-        toast({
-          title: "File Generated",
-          description: `Created ${data.file.name} successfully`,
-        });
-      } else {
-        throw new Error('File generation failed');
-      }
-    } catch (error) {
-      const errorMessage = {
-        role: 'assistant' as const,
-        content: `❌ Failed to generate file: ${(error as Error).message}`,
-        timestamp: Date.now()
-      };
-      setAIMessages(prev => [...prev, errorMessage]);
-
-      toast({
-        title: "Generation Failed",
-        description: (error as Error).message,
-        variant: "destructive"
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        switch (e.key) {
-          case 's':
-            e.preventDefault();
-            if (e.shiftKey) {
-              handleSaveAll();
-            } else {
-              handleSaveFile();
-            }
-            break;
-          case 'r':
-            e.preventDefault();
-            handleRunCode();
-            break;
-          case '`':
-            e.preventDefault();
-            setIsTerminalMaximized(prev => !prev);
-            break;
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeFileId, pendingChanges]);
-
   if (showTemplates) {
     return (
       <ProjectTemplates
+        onClose={() => setShowTemplates(false)}
         onSelectTemplate={(template) => {
           setShowTemplates(false);
           toast({
@@ -439,17 +266,76 @@ export default function IDE() {
           </div>
         </div>
         
-        {/* AI Assistant Content */}
-        <div className="flex-1">
-          <AIAssistant
-            projectId={currentProjectId}
-            isOpen={true}
-            onClose={() => {}}
-            currentCode={currentCode}
-            currentLanguage={currentLanguage}
-            onAppBuilding={handleAppBuilding}
-            onAppGenerated={handleAppGenerated}
-          />
+        {/* AI Chat Interface */}
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1 overflow-auto p-4 space-y-4">
+            {aiMessages.length === 0 && (
+              <div className="text-center text-gray-500 py-8">
+                <Bot className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <p className="text-lg font-medium mb-2">AI Assistant Ready</p>
+                <p className="text-sm">Ask me to create any type of application and I'll help you build it step by step.</p>
+              </div>
+            )}
+            
+            {aiMessages.map((message, index) => (
+              <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {message.role === 'assistant' && (
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                    <Bot className="h-4 w-4 text-white" />
+                  </div>
+                )}
+                <div className={`max-w-[80%] ${message.role === 'user' ? 'order-1' : ''}`}>
+                  <div className={`rounded-lg p-3 ${
+                    message.role === 'user' 
+                      ? 'bg-blue-600 text-white ml-auto' 
+                      : 'bg-gray-100 text-gray-900'
+                  }`}>
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  </div>
+                </div>
+                {message.role === 'user' && (
+                  <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-xs font-medium">U</span>
+                  </div>
+                )}
+              </div>
+            ))}
+            
+            {isAILoading && (
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                  <Bot className="h-4 w-4 text-white" />
+                </div>
+                <div className="bg-gray-100 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                    <span className="text-sm text-gray-600">Thinking...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="p-4 border-t border-editor-border bg-gray-50">
+            <form id="ai-form" onSubmit={handleAISubmit} className="flex gap-2">
+              <input
+                type="text"
+                value={aiInput}
+                onChange={(e) => setAIInput(e.target.value)}
+                placeholder="Ask me to create an application..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isAILoading}
+              />
+              <button
+                type="submit"
+                disabled={!aiInput.trim() || isAILoading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </form>
+            <p className="text-xs text-gray-500 mt-2">Ask me to create any type of application</p>
+          </div>
         </div>
       </div>
       
@@ -476,118 +362,130 @@ export default function IDE() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowFileTree(!showFileTree)}
-              className="h-8 px-3 text-xs bg-editor-bg border-editor-border hover:bg-editor-primary hover:text-white"
-            >
-              <FolderTree className="h-3 w-3 mr-1" />
-              Files
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
               onClick={() => setShowTerminal(!showTerminal)}
               className="h-8 px-3 text-xs bg-editor-bg border-editor-border hover:bg-editor-primary hover:text-white"
             >
-              <Terminal className="h-3 w-3 mr-1" />
+              <TerminalIcon className="h-3 w-3 mr-1" />
               Terminal
             </Button>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="bg-editor-surface border-b border-editor-border">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-            <TabsList className="bg-transparent border-none h-auto p-0 space-x-1 justify-start">
-              <TabsTrigger 
-                value="preview" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
-              >
-                <Play className="h-4 w-4 mr-2" />
-                Live Preview
-              </TabsTrigger>
-              <TabsTrigger 
-                value="code" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
-              >
-                <Code2 className="h-4 w-4 mr-2" />
-                Code
-              </TabsTrigger>
-              <TabsTrigger 
-                value="database" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
-              >
-                <Database className="h-4 w-4 mr-2" />
-                Database
-              </TabsTrigger>
-              <TabsTrigger 
-                value="deploy" 
-                className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
-              >
-                <Rocket className="h-4 w-4 mr-2" />
-                Deploy
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
-        </div>
+        {/* Main Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          <TabsList className="bg-editor-surface border-b border-editor-border h-auto p-0 rounded-none justify-start">
+            <TabsTrigger 
+              value="preview" 
+              className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Live Preview
+            </TabsTrigger>
+            <TabsTrigger 
+              value="code" 
+              className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
+            >
+              <Code2 className="h-4 w-4 mr-2" />
+              Code
+            </TabsTrigger>
+            <TabsTrigger 
+              value="database" 
+              className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
+            >
+              <Database className="h-4 w-4 mr-2" />
+              Database
+            </TabsTrigger>
+            <TabsTrigger 
+              value="deploy" 
+              className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
+            >
+              <Rocket className="h-4 w-4 mr-2" />
+              Deploy
+            </TabsTrigger>
+            <TabsTrigger 
+              value="settings" 
+              className="text-sm px-4 py-2 bg-transparent data-[state=active]:bg-editor-bg data-[state=active]:text-editor-primary border-b-2 border-transparent data-[state=active]:border-editor-primary rounded-none"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Tab Content */}
-        <div className="flex-1 flex flex-col">
-          <TabsContent value="preview" className="flex-1 m-0">
-            <LivePreview
-              projectId={currentProjectId}
-              isBuilding={isAppBuilding}
-              buildingSteps={buildingSteps}
-              currentStep={currentBuildStep}
-              generatedFiles={generatedAppFiles}
-            />
-          </TabsContent>
+          {/* Tab Contents */}
+          <div className="flex-1 flex">
+            <TabsContent value="preview" className="flex-1 m-0">
+              <LivePreview
+                projectId={currentProjectId}
+                isBuilding={isAppBuilding}
+                buildingSteps={buildingSteps}
+                currentStep={currentBuildStep}
+                generatedFiles={generatedAppFiles}
+              />
+            </TabsContent>
 
-          <TabsContent value="code" className="flex-1 m-0">
-            <div className="flex flex-1 overflow-hidden">
-              {showFileTree && (
-                <div className="w-64 border-r border-editor-border bg-editor-surface">
-                  <div className="h-full flex flex-col">
-                    <div className="flex items-center justify-between p-3 border-b border-editor-border">
-                      <h3 className="text-sm font-medium text-editor-text">Explorer</h3>
-                      <button
-                        onClick={() => setShowFileTree(false)}
-                        className="p-1 hover:bg-editor-bg rounded text-editor-text-dim hover:text-editor-text"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
+            <TabsContent value="code" className="flex flex-1 m-0">
+              <div className="flex flex-1 overflow-hidden">
+                {/* File Explorer */}
+                <div className={`transition-all duration-300 ${isExplorerCollapsed ? 'w-0' : 'w-64'} border-r border-editor-border bg-editor-surface`}>
+                  {!isExplorerCollapsed && (
+                    <div className="h-full flex flex-col">
+                      <div className="flex items-center justify-between p-3 border-b border-editor-border">
+                        <h3 className="text-sm font-medium text-editor-text">Explorer</h3>
+                        <button
+                          onClick={() => setIsExplorerCollapsed(true)}
+                          className="p-1 hover:bg-editor-bg rounded text-editor-text-dim hover:text-editor-text"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        <FileExplorer
+                          projectId={currentProjectId}
+                          onFileSelect={handleFileSelect}
+                          selectedFileId={activeFileId}
+                        />
+                      </div>
                     </div>
-                    <div className="flex-1 overflow-hidden">
-                      <FileExplorer
-                        projectId={currentProjectId}
-                        onFileSelect={handleFileSelect}
-                        selectedFileId={activeFileId}
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
-              )}
-              
-              <div className="flex-1 flex flex-col">
-                <CodeEditor
-                  openFiles={openFiles}
-                  activeFileId={activeFileId}
-                  onFileChange={handleFileChange}
-                  onFileClose={handleFileClose}
-                  onFileSelect={setActiveFileId}
-                />
+
+                {isExplorerCollapsed && (
+                  <div className="w-8 bg-editor-surface border-r border-editor-border flex flex-col items-center py-2">
+                    <button
+                      onClick={() => setIsExplorerCollapsed(false)}
+                      className="p-1 hover:bg-editor-bg rounded text-editor-text-dim hover:text-editor-text mb-2"
+                      title="Show Explorer"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+                
+                <div className="flex-1">
+                  <CodeEditor
+                    openFiles={openFiles}
+                    activeFileId={activeFileId}
+                    onFileChange={handleFileChange}
+                    onFileClose={handleFileClose}
+                    onFileSelect={setActiveFileId}
+                  />
+                </div>
               </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="database" className="flex-1 m-0">
-            <DatabaseBuilder projectId={currentProjectId} />
-          </TabsContent>
+            <TabsContent value="database" className="flex-1 m-0">
+              <DatabaseBuilder projectId={currentProjectId} />
+            </TabsContent>
 
-          <TabsContent value="deploy" className="flex-1 m-0">
-            <DeploymentCenter projectId={currentProjectId} />
-          </TabsContent>
-        </div>
+            <TabsContent value="deploy" className="flex-1 m-0">
+              <DeploymentCenter projectId={currentProjectId} />
+            </TabsContent>
+
+            <TabsContent value="settings" className="flex-1 m-0">
+              <SettingsPage />
+            </TabsContent>
+          </div>
+        </Tabs>
       </div>
       
       {/* Terminal Panel */}
@@ -602,188 +500,13 @@ export default function IDE() {
               <ChevronLeft className="h-4 w-4" />
             </button>
           </div>
-          <Terminal projectId={currentProjectId} />
+          <Terminal 
+            projectId={currentProjectId} 
+            isMaximized={isTerminalMaximized}
+            onToggleMaximize={() => setIsTerminalMaximized(!isTerminalMaximized)}
+          />
         </div>
       )}
-          {/* Code Editor Tab */}
-          <TabsContent value="code" className="flex flex-1 m-0">
-            <div className="flex flex-1 overflow-hidden">
-              {/* Collapsible File Explorer */}
-              <div className={`transition-all duration-300 ${isExplorerCollapsed ? 'w-0' : 'w-64'} border-r border-editor-border bg-editor-surface`}>
-                {!isExplorerCollapsed && (
-                  <div className="h-full flex flex-col">
-                    <div className="flex items-center justify-between p-3 border-b border-editor-border">
-                      <h3 className="text-sm font-medium text-editor-text">Explorer</h3>
-                      <button
-                        onClick={() => setIsExplorerCollapsed(true)}
-                        className="p-1 hover:bg-editor-bg rounded text-editor-text-dim hover:text-editor-text"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <FileExplorer
-                        projectId={currentProjectId}
-                        onFileSelect={handleFileSelect}
-                        selectedFileId={activeFileId}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Collapsed Explorer Toggle */}
-              {isExplorerCollapsed && (
-                <div className="w-8 bg-editor-surface border-r border-editor-border flex flex-col items-center py-2">
-                  <button
-                    onClick={() => setIsExplorerCollapsed(false)}
-                    className="p-1 hover:bg-editor-bg rounded text-editor-text-dim hover:text-editor-text mb-2"
-                    title="Show Explorer"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                  <button
-                    className="p-1 hover:bg-editor-bg rounded text-editor-text-dim hover:text-editor-text"
-                    title="Files"
-                  >
-                    <FileText className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-              
-              {/* Code Editor Only */}
-              <div className="flex flex-1 overflow-hidden">
-                <CodeEditor
-                  openFiles={openFiles}
-                  activeFileId={activeFileId}
-                  onFileChange={handleFileChange}
-                  onFileClose={handleFileClose}
-                  onFileSelect={setActiveFileId}
-                />
-              </div>
-            </div>
-          </TabsContent>
-                    </div>
-                    
-                    <div className="p-3 border-t border-editor-border">
-                      <form id="ai-form" onSubmit={handleAISubmit} className="flex space-x-2">
-                        <input
-                          type="text"
-                          value={aiInput}
-                          onChange={(e) => setAIInput(e.target.value)}
-                          placeholder="Ask AI to build something..."
-                          className="flex-1 px-2 py-1 text-xs bg-editor-bg border border-editor-border rounded text-editor-text placeholder:text-editor-text-dim focus:outline-none focus:ring-1 focus:ring-editor-primary"
-                          disabled={isAILoading || isGenerating}
-                        />
-                        <button 
-                          type="submit"
-                          disabled={isAILoading || isGenerating || !aiInput.trim()}
-                          className="px-2 py-1 bg-editor-primary text-white rounded hover:bg-editor-primary/80 transition-colors disabled:opacity-50"
-                        >
-                          <Send className="h-3 w-3" />
-                        </button>
-                      </form>
-                      <p className="text-xs text-editor-text-dim mt-1">Press Enter to send</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <Terminal
-                projectId={currentProjectId}
-                isMaximized={isTerminalMaximized}
-                onToggleMaximize={() => setIsTerminalMaximized(!isTerminalMaximized)}
-              />
-            </div>
-          </TabsContent>
-          
-          {/* Visual Builder Tab */}
-          <TabsContent value="visual" className="flex flex-1 m-0">
-            <div className="w-full h-full">
-              <VisualBuilder projectId={currentProjectId} />
-            </div>
-          </TabsContent>
-          
-          {/* Database Builder Tab */}
-          <TabsContent value="database" className="flex flex-1 m-0">
-            <DatabaseBuilder projectId={currentProjectId} />
-          </TabsContent>
-          
-          {/* Workflow Builder Tab */}
-          <TabsContent value="workflows" className="flex flex-1 m-0">
-            <WorkflowBuilder projectId={currentProjectId} />
-          </TabsContent>
-          
-          {/* Deployment Center Tab */}
-          <TabsContent value="deploy" className="flex flex-1 m-0">
-            <DeploymentCenter projectId={currentProjectId} />
-          </TabsContent>
-          
-          {/* Live Preview Tab - Split Screen with AI and App Preview */}
-          <TabsContent value="preview" className="flex flex-1 m-0">
-            <div className="flex w-full h-full">
-              {/* Left Side - AI Assistant */}
-              <div className="w-96 border-r border-editor-border bg-editor-surface">
-                <AIAssistant
-                  projectId={currentProjectId}
-                  isOpen={true}
-                  onClose={() => {}}
-                  currentCode={currentCode}
-                  currentLanguage={currentLanguage}
-                  onAppBuilding={handleAppBuilding}
-                  onAppGenerated={handleAppGenerated}
-                />
-              </div>
-              
-              {/* Right Side - Live App Preview */}
-              <div className="flex-1">
-                <LivePreview
-                  projectId={currentProjectId}
-                  isBuilding={isAppBuilding}
-                  buildingSteps={buildingSteps}
-                  currentStep={currentBuildStep}
-                  generatedFiles={generatedAppFiles}
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Settings Tab */}
-          <TabsContent value="settings" className="flex flex-1 m-0">
-            <SettingsPage />
-          </TabsContent>
-        </Tabs>
-      </div>
-      
-      {/* Enhanced Status Bar */}
-      <div className="h-6 bg-editor-surface border-t border-editor-border flex items-center justify-between px-4 text-xs">
-        <div className="flex items-center space-x-4">
-          <span className="text-editor-text-dim">
-            Project: {project?.name || 'Loading...'}
-          </span>
-          <span className="text-editor-text-dim">
-            Mode: {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-          </span>
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-editor-text-dim">Connected</span>
-          </div>
-        </div>
-        <div className="flex items-center space-x-4">
-          {activeTab === 'code' && activeFile && (
-            <>
-              <span className="text-editor-text-dim">
-                {activeFile.language?.toUpperCase() || 'PLAINTEXT'}
-              </span>
-              <span className="text-editor-text-dim">{activeFile.name}</span>
-            </>
-          )}
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-editor-primary rounded-full"></div>
-            <span className="text-editor-primary">AI Ready</span>
-          </div>
-        </div>
-      </div>
 
       {showQuickStart && (
         <QuickStartTemplates
@@ -791,7 +514,6 @@ export default function IDE() {
           onSelectTemplate={(prompt) => {
             setAIInput(prompt);
             setShowQuickStart(false);
-            // Auto-submit the prompt to generate the project
             setTimeout(() => {
               const form = document.querySelector('#ai-form') as HTMLFormElement;
               if (form) form.requestSubmit();
