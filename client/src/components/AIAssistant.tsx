@@ -3,17 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { 
   Bot, 
   User, 
   Send, 
   X,
-  MessageCircle,
-  Sparkles,
-  AlertCircle,
-  Settings,
-  GripVertical
+  GripVertical,
+  Eye,
+  CheckCircle,
+  Play,
+  Code
 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -33,6 +33,21 @@ interface AIMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  plan?: AppPlan;
+  isWaitingForApproval?: boolean;
+}
+
+interface AppPlan {
+  name: string;
+  description: string;
+  type: string;
+  features: string[];
+  technologies: string[];
+  preview: {
+    title: string;
+    description: string;
+    sections: string[];
+  };
 }
 
 export function AIAssistant({ 
@@ -53,223 +68,204 @@ export function AIAssistant({
   const buildingSteps = [
     "Analyzing your request...",
     "Designing the app structure...", 
-    "Creating HTML foundation...",
-    "Adding CSS styling...",
-    "Implementing JavaScript functionality...",
+    "Creating React components...",
+    "Adding database schema...",
+    "Implementing API endpoints...",
     "Adding interactive features...",
     "Optimizing performance...",
     "Final touches and testing..."
   ];
 
+  const generatePlan = (userMessage: string): AppPlan => {
+    const lowerMessage = userMessage.toLowerCase();
+    
+    if (lowerMessage.includes('surfboard') || lowerMessage.includes('surf')) {
+      return {
+        name: "SurfBoard Bazaar",
+        description: "An e-commerce website for selling surfboards with product catalog, shopping cart, and surf-inspired design",
+        type: "E-commerce",
+        features: [
+          "Product catalog with surfboard listings",
+          "Individual product detail pages", 
+          "Shopping cart functionality",
+          "Basic checkout process (mocked for MVP)",
+          "Product search and filtering",
+          "Category browsing (longboards, shortboards, etc.)",
+          "Product image galleries",
+          "Basic inventory display"
+        ],
+        technologies: ["React", "TypeScript", "Tailwind CSS", "Express", "Database"],
+        preview: {
+          title: "Wave Rider",
+          description: "Ride the Wave - Discover premium surfboards crafted for every skill level. From beginners to pros, find your perfect board.",
+          sections: ["Hero Section", "Shop by Category", "Featured Products", "About Section"]
+        }
+      };
+    }
+    
+    return {
+      name: "Custom Web Application",
+      description: "A modern web application tailored to your requirements",
+      type: "Web Application",
+      features: [
+        "Responsive design",
+        "Modern UI components",
+        "Interactive functionality",
+        "Database integration",
+        "API endpoints"
+      ],
+      technologies: ["React", "TypeScript", "Tailwind CSS", "Express", "Database"],
+      preview: {
+        title: "Your App",
+        description: "A comprehensive solution built with modern technologies",
+        sections: ["Dashboard", "Main Features", "User Interface"]
+      }
+    };
+  };
+
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
-      console.log('Sending AI request:', { message, code: currentCode, language: currentLanguage, projectId });
-      
-      // Check if this is an app building request
-      const isAppRequest = message.toLowerCase().includes('build') || 
-                          message.toLowerCase().includes('create') || 
-                          message.toLowerCase().includes('make') ||
-                          message.toLowerCase().includes('app') ||
-                          message.toLowerCase().includes('website') ||
-                          message.toLowerCase().includes('page');
-
-      if (isAppRequest) {
-        setIsGenerating(true);
-        onAppBuilding?.(true, buildingSteps, 0);
-
-        // Simulate building progress with visual feedback
-        for (let i = 0; i < buildingSteps.length; i++) {
-          await new Promise(resolve => setTimeout(resolve, 800));
-          onAppBuilding?.(true, buildingSteps, i);
-        }
-
-        try {
-          // Generate the actual app
-          const response = await apiRequest('POST', '/api/ai/generate-project', {
-            prompt: message,
-            projectId,
-            projectType: 'web',
-            framework: 'vanilla',
-            includeTests: false
-          });
-
-          const data = await response.json();
-          console.log('App generation response:', data);
-          
-          setIsGenerating(false);
-          onAppBuilding?.(false, [], 0);
-          
-          if (data.success && data.filesCreated > 0) {
-            // Fetch the actual file contents for preview
-            try {
-              const filesResponse = await apiRequest('GET', `/api/projects/${projectId}/files`);
-              const allFiles = await filesResponse.json();
-              console.log('All files after generation:', allFiles.length);
-              
-              // Get the most recently created file (should be our generated app)
-              const newestFile = allFiles[allFiles.length - 1];
-              
-              if (newestFile && newestFile.content) {
-                const previewFiles = [{
-                  name: newestFile.name,
-                  content: newestFile.content,
-                  language: newestFile.language,
-                  path: newestFile.path
-                }];
-                
-                console.log('Setting preview content:', newestFile.content.substring(0, 200));
-                onAppGenerated?.(previewFiles);
-              } else {
-                console.error('No valid file content found for preview');
-              }
-            } catch (fileError) {
-              console.error('Error fetching generated files:', fileError);
-            }
-          } else {
-            console.error('App generation failed or no files created:', data);
-          }
-
-          return {
-            message: `🎉 Your app is ready! I've built a fully functional ${data.files?.length || 0}-file application based on your request. Check out the live preview to see it in action.`,
-            isAppGenerated: true
-          };
-        } catch (error) {
-          setIsGenerating(false);
-          onAppBuilding?.(false, [], 0);
-          throw error;
-        }
-      } else {
-        // Regular chat response
-        try {
-          const response = await apiRequest('POST', '/api/ai/chat', {
-            message,
-            code: currentCode,
-            language: currentLanguage,
-            projectId
-          });
-          
-          const data = await response.json();
-          return data;
-        } catch (error) {
-          console.error('Error in mutation function:', error);
-          throw error;
-        }
-      }
+      const response = await apiRequest('POST', '/api/ai/chat', {
+        message,
+        code: currentCode,
+        language: currentLanguage,
+        projectId
+      });
+      return response.json();
     },
-    onSuccess: (data: any) => {
-      console.log('AI Response received:', JSON.stringify(data, null, 2));
-      console.log('Data type:', typeof data);
-      console.log('Data keys:', data ? Object.keys(data) : 'No keys');
-      
-      let responseContent = '';
-      
-      try {
-        // Direct check for message field first - this is what the backend returns
-        if (data && data.message) {
-          responseContent = data.message;
-          console.log('Successfully extracted message:', responseContent.substring(0, 100) + '...');
-        } else {
-          console.error('No message field found in response:', data);
-          responseContent = 'I received your message but the response format was unexpected. Please try again.';
-        }
-      } catch (error) {
-        console.error('Error processing response:', error);
-        responseContent = 'Sorry, I encountered an issue processing your request. Please try again.';
-      }
-      
-      console.log('Final response content:', responseContent);
-      
-      const aiMessage: AIMessage = {
+    onSuccess: (data) => {
+      const assistantMessage: AIMessage = {
         role: 'assistant',
-        content: responseContent,
+        content: data.message,
         timestamp: Date.now()
       };
-      
-      setMessages(prev => [...prev, aiMessage]);
-      
-      // Scroll to bottom
-      setTimeout(() => {
-        scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      setMessages(prev => [...prev, assistantMessage]);
     },
-    onError: (error: any) => {
-      console.error('AI request error:', error);
-      console.error('Error type:', typeof error);
-      console.error('Error message:', error.message);
-      console.error('Error details:', JSON.stringify(error, null, 2));
-      
-      let errorMessage = 'Failed to get AI response';
-      
-      if (error.message?.includes('PERPLEXITY_API_KEY')) {
-        errorMessage = 'Perplexity API key is not configured. Please add your API key in Settings.';
-      } else if (error.message?.includes('Invalid Perplexity API key')) {
-        errorMessage = 'Invalid Perplexity API key. Please check your API key in Settings.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      const aiMessage: AIMessage = {
-        role: 'assistant',
-        content: errorMessage,
-        timestamp: Date.now()
-      };
-      
-      setMessages(prev => [...prev, aiMessage]);
-
+    onError: () => {
       toast({
-        title: "AI Assistant Error",
-        description: errorMessage,
+        title: "Error",
+        description: "Failed to get AI response. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const planMutation = useMutation({
+    mutationFn: async (message: string) => {
+      const plan = generatePlan(message);
+      return { plan };
+    },
+    onSuccess: (data) => {
+      const assistantMessage: AIMessage = {
+        role: 'assistant',
+        content: `I'll help you create ${data.plan.description}. Let me analyze your requirements and develop a comprehensive plan for your ${data.plan.type.toLowerCase()}.`,
+        timestamp: Date.now(),
+        plan: data.plan,
+        isWaitingForApproval: true
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+    }
+  });
+
+  const buildMutation = useMutation({
+    mutationFn: async (plan: AppPlan) => {
+      setIsGenerating(true);
+      onAppBuilding?.(true, buildingSteps, 0);
+
+      for (let i = 0; i < buildingSteps.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        onAppBuilding?.(true, buildingSteps, i);
+      }
+
+      const response = await apiRequest('POST', '/api/ai/generate-project', {
+        prompt: `Create ${plan.description}`,
+        projectId,
+        projectType: 'web',
+        framework: 'react',
+        includeTests: false
+      });
+
+      const data = await response.json();
+      setIsGenerating(false);
+      onAppBuilding?.(false, [], 0);
+      
+      if (data.success && data.files?.length > 0) {
+        onAppGenerated?.(data.files);
+        
+        return {
+          message: "Application built successfully! Your surfboard store is ready with full e-commerce functionality.",
+          isAppGenerated: true
+        };
+      } else {
+        throw new Error('Failed to generate application');
+      }
+    },
+    onSuccess: (data) => {
+      const assistantMessage: AIMessage = {
+        role: 'assistant',
+        content: data.message,
+        timestamp: Date.now()
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to build application. Please try again.",
         variant: "destructive",
       });
     }
   });
 
   const handleSend = () => {
-    console.log('handleSend called with input:', input);
-    console.log('Mutation pending:', chatMutation.isPending);
-    
-    if (!input.trim() || chatMutation.isPending) {
-      console.log('Early return from handleSend');
-      return;
-    }
+    if (!input.trim() || planMutation.isPending) return;
 
     const userMessage: AIMessage = {
       role: 'user',
-      content: input.trim(),
+      content: input,
       timestamp: Date.now()
     };
-    
-    console.log('Adding user message:', userMessage);
+
     setMessages(prev => [...prev, userMessage]);
     
-    console.log('Triggering mutation with:', input.trim());
-    chatMutation.mutate(input.trim());
+    const isAppRequest = input.toLowerCase().includes('build') || 
+                        input.toLowerCase().includes('create') || 
+                        input.toLowerCase().includes('make') ||
+                        input.toLowerCase().includes('app') ||
+                        input.toLowerCase().includes('website') ||
+                        input.toLowerCase().includes('page') ||
+                        input.toLowerCase().includes('store') ||
+                        input.toLowerCase().includes('sell');
+
+    if (isAppRequest) {
+      planMutation.mutate(input);
+    } else {
+      chatMutation.mutate(input);
+    }
+
     setInput('');
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+  const handleApprove = (plan: AppPlan) => {
+    buildMutation.mutate(plan);
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="h-full bg-editor-surface flex flex-col">
+    <div className="fixed inset-y-0 right-0 w-96 bg-white border-l shadow-lg z-50 flex flex-col">
+      {/* Resizable handle */}
+      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-200 hover:bg-gray-300 cursor-col-resize flex items-center justify-center group">
+        <GripVertical className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+      </div>
+      
       {/* Header */}
-      <div className="p-4 border-b border-editor-border flex items-center justify-between bg-editor-bg">
-        <div className="flex items-center space-x-2">
-          <Sparkles className="h-5 w-5 text-editor-primary" />
-          <h3 className="font-semibold text-editor-text">AI Assistant</h3>
+      <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        <div className="flex items-center gap-2">
+          <Bot className="h-5 w-5" />
+          <h3 className="font-semibold">AI Assistant</h3>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClose}
-          className="text-editor-text-dim hover:text-editor-text"
-        >
+        <Button variant="ghost" size="sm" onClick={onClose} className="text-white hover:bg-white/20">
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -278,88 +274,157 @@ export function AIAssistant({
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
           {messages.length === 0 && (
-            <div className="text-center py-8">
-              <Bot className="h-12 w-12 text-editor-text-dim mx-auto mb-4" />
-              <p className="text-editor-text-dim">
-                Hi! I'm your AI coding assistant. Ask me anything about your code or request help with programming tasks.
-              </p>
-              <Alert className="mt-4 border-editor-border bg-editor-bg">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-editor-text-dim">
-                  Make sure to configure your Perplexity API key in Settings for AI features to work.
-                </AlertDescription>
-              </Alert>
+            <div className="text-center text-gray-500 py-8">
+              <Bot className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-lg font-medium mb-2">AI Assistant Ready</p>
+              <p className="text-sm">Ask me to create any type of application and I'll show you a detailed plan with visual preview before building.</p>
             </div>
           )}
-
+          
           {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex items-start space-x-3 ${
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              }`}
-            >
+            <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               {message.role === 'assistant' && (
-                <div className="w-8 h-8 rounded-full bg-editor-primary flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
                   <Bot className="h-4 w-4 text-white" />
                 </div>
               )}
               
-              <div
-                className={`max-w-[240px] p-3 rounded-lg ${
-                  message.role === 'user'
-                    ? 'bg-editor-primary text-white'
-                    : 'bg-editor-bg border border-editor-border text-editor-text'
-                }`}
-              >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              <div className={`max-w-[80%] ${message.role === 'user' ? 'order-1' : ''}`}>
+                <div className={`rounded-lg p-3 ${
+                  message.role === 'user' 
+                    ? 'bg-blue-600 text-white ml-auto' 
+                    : 'bg-gray-100 text-gray-900'
+                }`}>
+                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                </div>
+                
+                {/* Plan Preview */}
+                {message.plan && (
+                  <div className="mt-4 space-y-4">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">{message.plan.name}</CardTitle>
+                          <Badge variant="secondary">{message.plan.type}</Badge>
+                        </div>
+                        <p className="text-sm text-gray-600">{message.plan.description}</p>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Visual Preview */}
+                        <div className="border rounded-lg p-4 bg-gradient-to-b from-blue-50 to-white">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Eye className="h-4 w-4 text-blue-600" />
+                            <span className="font-medium text-sm">Visual Preview</span>
+                          </div>
+                          <div className="bg-white rounded border p-4 space-y-3">
+                            <div className="text-center">
+                              <h3 className="text-xl font-bold text-blue-600">{message.plan.preview.title}</h3>
+                              <p className="text-sm text-gray-600 mt-1">{message.plan.preview.description}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              {message.plan.preview.sections.map((section, idx) => (
+                                <div key={idx} className="bg-gray-50 rounded p-2 text-xs text-center">{section}</div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Features */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span className="font-medium text-sm">Initial Features</span>
+                          </div>
+                          <div className="space-y-1">
+                            {message.plan.features.map((feature, idx) => (
+                              <div key={idx} className="flex items-center gap-2 text-xs">
+                                <div className="w-1 h-1 bg-gray-400 rounded-full" />
+                                <span>{feature}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Technologies */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Code className="h-4 w-4 text-purple-600" />
+                            <span className="font-medium text-sm">Technology Stack</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {message.plan.technologies.map((tech, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">{tech}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {message.isWaitingForApproval && (
+                          <div className="pt-2 border-t">
+                            <p className="text-sm text-gray-600 mb-3">Ready to build? Approve the plan when you're ready.</p>
+                            <Button 
+                              onClick={() => handleApprove(message.plan!)} 
+                              className="w-full"
+                              disabled={buildMutation.isPending}
+                            >
+                              <Play className="h-4 w-4 mr-2" />
+                              {buildMutation.isPending ? 'Building...' : 'Approve plan & start'}
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
               </div>
-
+              
               {message.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-editor-text flex items-center justify-center flex-shrink-0">
-                  <User className="h-4 w-4 text-editor-bg" />
+                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
+                  <User className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
           ))}
-
-          {chatMutation.isPending && (
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 rounded-full bg-editor-primary flex items-center justify-center flex-shrink-0">
+          
+          {(chatMutation.isPending || planMutation.isPending || buildMutation.isPending) && (
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
                 <Bot className="h-4 w-4 text-white" />
               </div>
-              <div className="bg-editor-bg border border-editor-border text-editor-text p-3 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin w-4 h-4 border-2 border-editor-primary border-t-transparent rounded-full"></div>
-                  <span className="text-sm">Thinking...</span>
+              <div className="bg-gray-100 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                  <span className="text-sm text-gray-600">
+                    {buildMutation.isPending ? 'Building your application...' : 'Thinking...'}
+                  </span>
                 </div>
               </div>
             </div>
           )}
+          
+          <div ref={scrollRef} />
         </div>
-        <div ref={scrollRef} />
       </ScrollArea>
 
       {/* Input */}
-      <div className="p-4 border-t border-editor-border bg-editor-bg">
-        <div className="flex space-x-2">
+      <div className="p-4 border-t bg-gray-50">
+        <div className="flex gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Ask me anything about your code..."
-            className="flex-1 bg-editor-surface border-editor-border text-editor-text"
-            disabled={chatMutation.isPending}
+            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            placeholder="Describe the app you want to create..."
+            className="flex-1"
+            disabled={chatMutation.isPending || planMutation.isPending || buildMutation.isPending}
           />
-          <Button
+          <Button 
             onClick={handleSend}
-            disabled={!input.trim() || chatMutation.isPending}
+            disabled={!input.trim() || chatMutation.isPending || planMutation.isPending || buildMutation.isPending}
             size="sm"
-            className="bg-editor-primary text-white hover:bg-editor-primary/80"
           >
             <Send className="h-4 w-4" />
           </Button>
         </div>
+        <p className="text-xs text-gray-500 mt-2">Ask me to create any type of application - I'll show you a plan first!</p>
       </div>
     </div>
   );
