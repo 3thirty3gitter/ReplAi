@@ -74,7 +74,7 @@ export function LivePreview({
 <body>
     <div id="root"></div>
     <script type="text/babel">
-        ${appFile.content.replace('export default App', '').replace('export default function App', 'function App')}
+        ${appFile.content ? appFile.content.replace('export default App', '').replace('export default function App', 'function App') : ''}
         
         function AppWrapper() {
           return React.createElement(App);

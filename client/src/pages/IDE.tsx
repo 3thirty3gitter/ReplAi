@@ -351,26 +351,25 @@ export default function IDE() {
                           currentInput.toLowerCase().includes('task');
 
       if (isAppRequest) {
-        // First get AI analysis of the user's request
+        // Get AI analysis and then generate plan
+        const analysisResponse = await apiRequest('POST', '/api/ai/chat', {
+          message: currentInput,
+          code: currentCode,
+          language: currentLanguage,
+          projectId: currentProjectId
+        });
+
+        const analysisData = await analysisResponse.json();
+        
+        const analysisMessage = {
+          role: 'assistant' as const,
+          content: analysisData.message || "I understand your request. Let me create a comprehensive plan for your application.",
+          timestamp: Date.now()
+        };
+        setAIMessages(prev => [...prev, analysisMessage]);
+
+        // Generate the detailed plan
         try {
-          const analysisResponse = await apiRequest('POST', '/api/ai/chat', {
-            message: `Analyze this request and provide a thoughtful response: "${currentInput}". Then I will generate a comprehensive plan.`,
-            code: currentCode,
-            language: currentLanguage,
-            projectId: currentProjectId
-          });
-
-          const analysisData = await analysisResponse.json();
-          
-          // Add AI analysis response
-          const analysisMessage = {
-            role: 'assistant' as const,
-            content: analysisData.message || "I understand your request. Let me analyze what you need and create a comprehensive plan.",
-            timestamp: Date.now()
-          };
-          setAIMessages(prev => [...prev, analysisMessage]);
-
-          // Then generate the plan
           const planResponse = await apiRequest('POST', '/api/ai/generate-plan', {
             prompt: currentInput
           });
@@ -380,18 +379,17 @@ export default function IDE() {
           if (planData.success && planData.plan) {
             const planMessage = {
               role: 'assistant' as const,
-              content: `Based on your requirements, I've created a detailed plan. Here's what I propose to build:`,
+              content: `Here's the detailed plan I've created based on your requirements:`,
               timestamp: Date.now(),
               plan: planData.plan,
               isWaitingForApproval: true
             };
             setAIMessages(prev => [...prev, planMessage]);
           } else {
-            // Fallback to local plan generation if API fails
             const plan = generateAppPlan(currentInput);
             const planMessage = {
               role: 'assistant' as const,
-              content: `Based on your requirements, I've created a detailed plan. Here's what I propose to build:`,
+              content: `Here's the detailed plan I've created based on your requirements:`,
               timestamp: Date.now(),
               plan: plan,
               isWaitingForApproval: true
@@ -399,11 +397,10 @@ export default function IDE() {
             setAIMessages(prev => [...prev, planMessage]);
           }
         } catch (error) {
-          // Fallback to local plan generation if API fails
           const plan = generateAppPlan(currentInput);
           const planMessage = {
             role: 'assistant' as const,
-            content: `I understand you want to create an application. Based on your request, here's what I propose to build:`,
+            content: `Here's the detailed plan I've created based on your requirements:`,
             timestamp: Date.now(),
             plan: plan,
             isWaitingForApproval: true
@@ -411,7 +408,7 @@ export default function IDE() {
           setAIMessages(prev => [...prev, planMessage]);
         }
       } else {
-        // Regular chat response
+        // Regular chat response using Perplexity
         const response = await apiRequest('POST', '/api/ai/chat', {
           message: currentInput,
           code: currentCode,

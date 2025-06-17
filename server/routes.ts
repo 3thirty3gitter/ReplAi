@@ -290,17 +290,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projectId: z.number()
       }).parse(req.body);
 
-      const request = {
-        code: code || '',
-        language: language || 'javascript',
-        prompt: message,
-        context: `This is a chat message from the user in project ${projectId}. Please provide helpful coding assistance.`
+      if (!process.env.PERPLEXITY_API_KEY) {
+        return res.status(500).json({
+          success: false,
+          message: "Perplexity API key not configured"
+        });
+      }
+
+      // Build context-aware prompt for Perplexity
+      let contextPrompt = `You are an expert software development assistant. Respond helpfully and conversationally to the user's message: "${message}"`;
+      
+      if (code && language) {
+        contextPrompt += `\n\nThe user is working with ${language} code:\n\`\`\`${language}\n${code}\n\`\`\`\n\nProvide relevant assistance based on their code and message.`;
+      }
+
+      const perplexityRequest = {
+        model: "llama-3.1-sonar-small-128k-online",
+        messages: [
+          {
+            role: "system" as const,
+            content: "You are a helpful software development assistant. Provide clear, concise, and actionable responses to help users with their development tasks."
+          },
+          {
+            role: "user" as const,
+            content: contextPrompt
+          }
+        ],
+        max_tokens: 1000,
+        temperature: 0.2,
+        top_p: 0.9,
+        stream: false
       };
 
-      const response = await getCodeAssistance(request);
-      res.json({ message: response.suggestion });
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(perplexityRequest)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Perplexity API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const aiMessage = data.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
+
+      res.json({ message: aiMessage });
     } catch (error) {
-      res.status(400).json({ error: (error as Error).message });
+      console.error('Perplexity chat error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to get AI response. Please check that the Perplexity API key is configured."
+      });
     }
   });
 
