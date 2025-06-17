@@ -532,7 +532,7 @@ export default function IDE() {
         
         {/* AI Chat Interface */}
         <div className="flex-1 flex flex-col bg-editor-surface">
-          <div className="flex-1 overflow-auto p-4 space-y-4">
+          <div ref={chatMessagesRef} className="flex-1 overflow-auto p-4 space-y-4">
             {aiMessages.length === 0 && (
               <div className="text-center text-editor-text-dim py-8">
                 <Bot className="h-12 w-12 mx-auto mb-4 text-editor-text-dim" />
