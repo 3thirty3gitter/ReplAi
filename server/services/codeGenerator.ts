@@ -1630,48 +1630,27 @@ function createMinimalApp(prompt: string): string {
 
 export async function generateProjectFiles(request: CodeGenerationRequest): Promise<CodeGenerationResponse> {
   try {
-    console.log('Generating full-stack application for:', request.prompt);
+    console.log('Generating dynamic full-stack application for:', request.prompt);
     
-    // Analyze application type for sophisticated generation
-    const appType = analyzeApplicationType(request.prompt);
-    console.log('Application type detected:', appType);
+    // Use AI to generate everything dynamically - no templates
+    const files = await generateDynamicApplication(request.prompt, request.projectId);
     
-    // Use AI to dynamically generate sophisticated applications
-    if (appType !== 'business-website') {
-      const files = await generateDynamicApplication(request.prompt, request.projectId);
-      
-      return {
-        files,
-        instructions: 'Complete full-stack application with React frontend, Express backend, and database integration',
-        nextSteps: [
-          'Review generated files',
-          'Install dependencies',
-          'Run database migrations',
-          'Start development server'
-        ],
-        dependencies: [
-          'react', 'typescript', 'tailwindcss', 'framer-motion',
-          'express', 'drizzle-orm', 'zod', 'bcryptjs', 'jsonwebtoken'
-        ]
-      };
-    }
-    
-    // For business websites, create professional single-page applications
-    const htmlContent = createStunningWebsite(request.prompt);
     return {
-      files: [{
-        name: 'index.html',
-        path: '/index.html',
-        content: htmlContent,
-        language: 'html',
-        description: 'Professional business website'
-      }],
-      instructions: 'Complete application with embedded functionality',
-      nextSteps: ['Open in browser', 'Test all features'],
-      dependencies: []
+      files,
+      instructions: 'Complete full-stack application with React frontend, Express backend, and database integration',
+      nextSteps: [
+        'Review generated files',
+        'Install dependencies',
+        'Run database migrations',
+        'Start development server'
+      ],
+      dependencies: [
+        'react', 'typescript', 'tailwindcss', 'framer-motion',
+        'express', 'drizzle-orm', 'zod', 'bcryptjs', 'jsonwebtoken'
+      ]
     };
   } catch (error) {
-    console.error('Error in code generation:', error);
+    console.error('Error in dynamic AI generation:', error);
     throw error;
   }
 }
@@ -2488,15 +2467,331 @@ async function generateDynamicApplication(prompt: string, projectId: number): Pr
 
 function generateDynamicReactApp(prompt: string, appName: string): string {
   // Analyze prompt to determine app type and features
-  const isHealthApp = prompt.toLowerCase().includes('calorie') || prompt.toLowerCase().includes('fitness') || prompt.toLowerCase().includes('health');
-  const isTrackingApp = prompt.toLowerCase().includes('track') || prompt.toLowerCase().includes('log');
+  const lowerPrompt = prompt.toLowerCase();
+  const isHealthApp = lowerPrompt.includes('calorie') || lowerPrompt.includes('fitness') || lowerPrompt.includes('health') || lowerPrompt.includes('nutrition') || lowerPrompt.includes('diet');
+  const isTrackingApp = lowerPrompt.includes('track') || lowerPrompt.includes('log');
+  const isEcommerce = lowerPrompt.includes('shop') || lowerPrompt.includes('store') || lowerPrompt.includes('ecommerce');
+  const isSocial = lowerPrompt.includes('social') || lowerPrompt.includes('chat') || lowerPrompt.includes('message');
   
   if (isHealthApp || isTrackingApp) {
     return generateCalorieTrackingApp(appName);
   }
   
+  if (isEcommerce) {
+    return generateEcommerceApp(appName);
+  }
+  
+  if (isSocial) {
+    return generateSocialApp(appName);
+  }
+  
   // Default sophisticated React app
   return generateAdvancedReactApp(prompt, appName);
+}
+
+function generateEcommerceApp(appName: string): string {
+  return `import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { ShoppingCart, Star, Plus, Minus } from 'lucide-react';
+
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  description: string;
+  category: string;
+  rating: number;
+  stock: number;
+}
+
+interface CartItem {
+  id: number;
+  productId: number;
+  quantity: number;
+  product: Product;
+}
+
+function App() {
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const queryClient = useQueryClient();
+
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['/api/products'],
+  });
+
+  const addToCart = (product: Product) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.productId === product.id);
+      if (existing) {
+        return prev.map(item => 
+          item.productId === product.id 
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { id: Date.now(), productId: product.id, quantity: 1, product }];
+    });
+  };
+
+  const updateQuantity = (productId: number, quantity: number) => {
+    if (quantity <= 0) {
+      setCart(prev => prev.filter(item => item.productId !== productId));
+    } else {
+      setCart(prev => prev.map(item => 
+        item.productId === productId ? { ...item, quantity } : item
+      ));
+    }
+  };
+
+  const total = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto">
+        <header className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">${appName}</h1>
+          <p className="text-lg text-gray-600">Discover amazing products at great prices</p>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <h2 className="text-2xl font-bold mb-4">Products</h2>
+            {isLoading ? (
+              <div className="text-center py-8">Loading products...</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {products.map((product: Product) => (
+                  <Card key={product.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <CardTitle className="text-lg">{product.name}</CardTitle>
+                      <CardDescription>{product.category}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <p className="text-sm text-gray-600">{product.description}</p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="text-sm">{product.rating}</span>
+                          </div>
+                          <Badge variant="outline">In Stock: {product.stock}</Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-2xl font-bold text-green-600">
+                            \$\{product.price.toFixed(2)}
+                          </span>
+                          <Button onClick={() => addToCart(product)} size="sm">
+                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            Add to Cart
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="lg:col-span-1">
+            <Card className="sticky top-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  Shopping Cart ({cart.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {cart.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">Your cart is empty</p>
+                ) : (
+                  <div className="space-y-4">
+                    {cart.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between p-2 border rounded">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm">{item.product.name}</h4>
+                          <p className="text-xs text-gray-500">\$\{item.product.price.toFixed(2)} each</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-8 text-center">{item.quantity}</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between font-bold text-lg">
+                        <span>Total: \$\{total.toFixed(2)}</span>
+                      </div>
+                      <Button className="w-full mt-2">Checkout</Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;`;
+}
+
+function generateSocialApp(appName: string): string {
+  return `import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Heart, MessageCircle, Share, Send } from 'lucide-react';
+import { format } from 'date-fns';
+
+interface Post {
+  id: number;
+  content: string;
+  author: string;
+  likes: number;
+  comments: number;
+  createdAt: string;
+}
+
+function App() {
+  const [newPost, setNewPost] = useState('');
+  const queryClient = useQueryClient();
+
+  const { data: posts = [], isLoading } = useQuery({
+    queryKey: ['/api/posts'],
+  });
+
+  const createPostMutation = useMutation({
+    mutationFn: (content: string) => 
+      apiRequest('POST', '/api/posts', { content, author: 'User' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
+      setNewPost('');
+    },
+  });
+
+  const likePostMutation = useMutation({
+    mutationFn: (postId: number) => 
+      apiRequest('POST', \`/api/posts/\${postId}/like\`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
+    },
+  });
+
+  const handleCreatePost = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPost.trim()) return;
+    createPostMutation.mutate(newPost);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-2xl mx-auto">
+        <header className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">${appName}</h1>
+          <p className="text-lg text-gray-600">Connect with friends and share your thoughts</p>
+        </header>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>What's on your mind?</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCreatePost} className="space-y-4">
+              <Textarea
+                value={newPost}
+                onChange={(e) => setNewPost(e.target.value)}
+                placeholder="Share something interesting..."
+                className="min-h-[100px]"
+              />
+              <Button type="submit" className="w-full" disabled={createPostMutation.isPending}>
+                <Send className="h-4 w-4 mr-2" />
+                {createPostMutation.isPending ? 'Posting...' : 'Share Post'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+          {isLoading ? (
+            <div className="text-center py-8">Loading posts...</div>
+          ) : posts.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No posts yet. Be the first to share something!
+            </div>
+          ) : (
+            posts.map((post: Post) => (
+              <Card key={post.id}>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarFallback>{post.author[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold">{post.author}</h3>
+                      <p className="text-sm text-gray-500">
+                        {format(new Date(post.createdAt), 'MMM d, yyyy • h:mm a')}
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="mb-4">{post.content}</p>
+                  <div className="flex items-center gap-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => likePostMutation.mutate(post.id)}
+                      className="flex items-center gap-2"
+                    >
+                      <Heart className="h-4 w-4" />
+                      <span>{post.likes}</span>
+                    </Button>
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                      <MessageCircle className="h-4 w-4" />
+                      <span>{post.comments}</span>
+                    </Button>
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                      <Share className="h-4 w-4" />
+                      Share
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;`;
 }
 
 function generateCalorieTrackingApp(appName: string): string {
