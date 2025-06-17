@@ -105,9 +105,25 @@ Make the plan comprehensive, realistic, and tailored to the user's specific requ
       throw new Error('No content received from Perplexity API');
     }
 
-    // Parse the JSON response
+    // Parse the JSON response, handling markdown code blocks
     try {
-      const plan: AppPlan = JSON.parse(content);
+      let jsonContent = content.trim();
+      
+      // Extract JSON from markdown code blocks
+      const codeBlockMatch = jsonContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (codeBlockMatch) {
+        jsonContent = codeBlockMatch[1].trim();
+      } else {
+        // If no code blocks, try to find JSON object boundaries
+        const firstBrace = jsonContent.indexOf('{');
+        const lastBrace = jsonContent.lastIndexOf('}');
+        
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          jsonContent = jsonContent.substring(firstBrace, lastBrace + 1);
+        }
+      }
+      
+      const plan: AppPlan = JSON.parse(jsonContent);
       
       // Validate the plan structure
       if (!plan.name || !plan.description || !plan.type || !plan.features || !plan.technologies || !plan.preview) {
