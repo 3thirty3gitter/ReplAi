@@ -164,6 +164,9 @@ export function AIAssistant({
         isWaitingForApproval: true
       };
       setMessages(prev => [...prev, assistantMessage]);
+      
+      // REMOVED: Automatic file generation trigger
+      // This was causing files to be generated without user approval
     }
   });
 
