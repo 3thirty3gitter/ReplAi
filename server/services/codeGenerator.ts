@@ -1685,6 +1685,7 @@ type ApplicationType =
   | 'fintech' 
   | 'education' 
   | 'saas-platform' 
+  | 'health-fitness'
   | 'business-website';
 
 function analyzeApplicationType(prompt: string): ApplicationType {
@@ -1714,6 +1715,9 @@ function analyzeApplicationType(prompt: string): ApplicationType {
   if (promptLower.includes('saas') || promptLower.includes('software') || promptLower.includes('platform') || promptLower.includes('api')) {
     return 'saas-platform';
   }
+  if (promptLower.includes('health') || promptLower.includes('fitness') || promptLower.includes('workout') || promptLower.includes('calorie') || promptLower.includes('nutrition') || promptLower.includes('exercise') || promptLower.includes('diet') || promptLower.includes('tracking')) {
+    return 'health-fitness';
+  }
   
   return 'business-website';
 }
@@ -1742,6 +1746,8 @@ async function generateFullStackApplication(prompt: string, appType: Application
       return generateSocialPlatform(prompt, projectId);
     case 'saas-platform':
       return generateDashboardApp(prompt, projectId);
+    case 'health-fitness':
+      return generateDynamicApplication(prompt, projectId);
     default:
       return generateBusinessWebsiteApp(prompt, projectId);
   }

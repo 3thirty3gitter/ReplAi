@@ -1,0 +1,38 @@
+ebSocket connection to 'wss://c0897ec7-cf0b-4c0e-8fd5-3e6c2d6f7940-00-2x0dcbeqsdex2.kirk.replit.dev/?token=W1f7LxTBPfy1' failed: 
+t @ Network.js:227
+Network.js:227  Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=W1f7LxTBPfy1' is invalid.
+    at new t (Network.js:227:18)
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+Console.js:61 handleSend called with input: beild me a calorie tracking app
+Console.js:61 Mutation pending: false
+Console.js:61 Adding user message: Object
+Console.js:61 Triggering mutation with: beild me a calorie tracking app
+Console.js:61 Sending AI request: Object
+Console.js:61 App generation response: Object
+Console.js:61 All files after generation: 6
+Console.js:61 Setting preview content: <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>beild me a calorie tracking app</title>
+    <st
+Console.js:61 AI Response received: {
+  "message": "🎉 Your app is ready! I've built a fully functional 1-file application based on your request. Check out the live preview to see it in action.",
+  "isAppGenerated": true
+}
+Console.js:61 Data type: object
+Console.js:61 Data keys: Array(2)
+Console.js:61 Successfully extracted message: 🎉 Your app is ready! I've built a fully functional 1-file application based on your request. Check ...
+Console.js:61 Final response content: 🎉 Your app is ready! I've built a fully functional 1-file application based on your request. Check out the live preview to see it in action.
+Console.js:61 Generated files for preview: Array(1)
+Console.js:61 Setting preview content: <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>beild me a calorie tracking app</title>
+    <st...
+stallwart.build.js:1 stallwart: failed ping 1
