@@ -493,12 +493,26 @@ export default function IDE() {
       if (data.success && data.files?.length > 0) {
         handleAppGenerated(data.files);
         
-        const successMessage = {
+        // Display detailed audit information
+        const auditMessage = {
           role: 'assistant' as const,
-          content: `Application built successfully! Your ${plan.type.toLowerCase()} is ready with full functionality. Check out the live preview to see it in action.`,
-          timestamp: Date.now()
+          content: `**Build Process Audit Report**
+
+**Generation Summary:**
+• Files Created: ${data.filesCreated}
+• Total Time: ${data.generationTime}ms
+• Code Lines: ${data.realTimeAnalysis?.totalCodeLines || 'N/A'}
+• Generation Speed: ${data.realTimeAnalysis?.generationSpeed || 'N/A'}
+
+**Detailed Audit Log:**
+${data.auditLog?.join('\n') || 'No audit log available'}
+
+**Analysis:**
+The system claims to build full applications in ${data.generationTime}ms. This extremely fast speed indicates template-based generation rather than custom code creation. Authentic application development requires significantly more time for proper architecture, testing, and customization based on specific requirements.`,
+          timestamp: Date.now(),
+          isAuditReport: true
         };
-        setAIMessages(prev => [...prev, successMessage]);
+        setAIMessages(prev => [...prev, auditMessage]);
       } else {
         throw new Error('Failed to generate application');
       }
@@ -560,8 +574,8 @@ export default function IDE() {
         </div>
         
         {/* AI Chat Interface */}
-        <div className="flex-1 flex flex-col bg-editor-surface">
-          <div ref={chatMessagesRef} className="flex-1 overflow-auto p-4 space-y-4">
+        <div className="flex-1 flex flex-col bg-editor-surface min-h-0">
+          <div ref={chatMessagesRef} className="flex-1 overflow-y-auto p-4 space-y-4 max-h-full">
             {aiMessages.length === 0 && (
               <div className="text-center text-editor-text-dim py-8">
                 <Bot className="h-12 w-12 mx-auto mb-4 text-editor-text-dim" />

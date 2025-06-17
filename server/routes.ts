@@ -381,8 +381,11 @@ User's message: "${message}"`;
     }
   });
 
-  // AI Code Generation - Generate complete project files
+  // AI Code Generation - Generate complete project files with full audit trail
   app.post('/api/ai/generate-project', async (req, res) => {
+    const startTime = Date.now();
+    const auditLog: string[] = [];
+    
     try {
       const { prompt, projectId, projectType, framework, includeTests } = z.object({
         prompt: z.string().min(1),
@@ -392,6 +395,16 @@ User's message: "${message}"`;
         includeTests: z.boolean().optional()
       }).parse(req.body);
 
+      auditLog.push(`[${new Date().toISOString()}] AUDIT: Starting build process for: "${prompt}"`);
+      auditLog.push(`[${new Date().toISOString()}] AUDIT: Project ID: ${projectId}, Type: ${projectType}, Framework: ${framework}`);
+
+      // Check if Perplexity is actually being used for code generation
+      if (!process.env.PERPLEXITY_API_KEY) {
+        auditLog.push(`[${new Date().toISOString()}] WARNING: No Perplexity API key - using template fallback`);
+      } else {
+        auditLog.push(`[${new Date().toISOString()}] AUDIT: Perplexity API key available - attempting AI generation`);
+      }
+
       const result = await generateProjectFiles({
         prompt,
         projectId,
@@ -400,8 +413,25 @@ User's message: "${message}"`;
         includeTests
       });
 
+      auditLog.push(`[${new Date().toISOString()}] AUDIT: Generated ${result.files.length} files in ${Date.now() - startTime}ms`);
+      
+      // Analyze what was actually generated
+      result.files.forEach((file, index) => {
+        const contentLength = file.content.length;
+        const isTemplate = file.content.includes('${') || file.content.includes('placeholder') || file.content.includes('TODO');
+        const hasRealLogic = file.content.includes('useState') || file.content.includes('useEffect') || file.content.includes('async');
+        
+        auditLog.push(`[${new Date().toISOString()}] FILE ${index + 1}: ${file.name} (${contentLength} chars)`);
+        auditLog.push(`[${new Date().toISOString()}] - Template detected: ${isTemplate}`);
+        auditLog.push(`[${new Date().toISOString()}] - Real logic detected: ${hasRealLogic}`);
+      });
+
       // Actually create the files in the project
       await createGeneratedFiles(projectId, result.files);
+
+      const totalTime = Date.now() - startTime;
+      auditLog.push(`[${new Date().toISOString()}] AUDIT: Total generation time: ${totalTime}ms`);
+      auditLog.push(`[${new Date().toISOString()}] AUDIT: Build process completed`);
 
       res.json({
         success: true,
@@ -409,10 +439,23 @@ User's message: "${message}"`;
         files: result.files.map(f => ({ name: f.name, path: f.path, description: f.description })),
         instructions: result.instructions,
         nextSteps: result.nextSteps,
-        dependencies: result.dependencies
+        dependencies: result.dependencies,
+        auditLog: auditLog,
+        generationTime: totalTime,
+        realTimeAnalysis: {
+          totalFiles: result.files.length,
+          totalCodeLines: result.files.reduce((sum, f) => sum + f.content.split('\n').length, 0),
+          avgFileSize: Math.round(result.files.reduce((sum, f) => sum + f.content.length, 0) / result.files.length),
+          generationSpeed: `${Math.round(result.files.reduce((sum, f) => sum + f.content.length, 0) / totalTime)} chars/ms`
+        }
       });
     } catch (error) {
-      res.status(400).json({ error: (error as Error).message });
+      auditLog.push(`[${new Date().toISOString()}] ERROR: ${(error as Error).message}`);
+      res.status(400).json({ 
+        error: (error as Error).message,
+        auditLog: auditLog,
+        generationTime: Date.now() - startTime
+      });
     }
   });
 
