@@ -263,8 +263,6 @@ export default function IDE() {
         // Get AI analysis and then generate plan
         const analysisResponse = await apiRequest('POST', '/api/ai/chat', {
           message: currentInput,
-          code: currentCode,
-          language: currentLanguage,
           projectId: currentProjectId
         });
 
@@ -322,8 +320,6 @@ export default function IDE() {
         // Regular chat response using Perplexity
         const response = await apiRequest('POST', '/api/ai/chat', {
           message: currentInput,
-          code: currentCode,
-          language: currentLanguage,
           projectId: currentProjectId
         });
 
@@ -444,7 +440,6 @@ All code was generated directly by Perplexity AI based on your specific requirem
   if (showTemplates) {
     return (
       <ProjectTemplates
-        onClose={() => setShowTemplates(false)}
         onSelectTemplate={(template) => {
           setShowTemplates(false);
           toast({
