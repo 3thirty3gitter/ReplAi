@@ -267,13 +267,13 @@ export default function IDE() {
         </div>
         
         {/* AI Chat Interface */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col bg-editor-surface">
           <div className="flex-1 overflow-auto p-4 space-y-4">
             {aiMessages.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
-                <Bot className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-lg font-medium mb-2">AI Assistant Ready</p>
-                <p className="text-sm">Ask me to create any type of application and I'll help you build it step by step.</p>
+              <div className="text-center text-editor-text-dim py-8">
+                <Bot className="h-12 w-12 mx-auto mb-4 text-editor-text-dim" />
+                <p className="text-lg font-medium mb-2 text-editor-text">AI Assistant Ready</p>
+                <p className="text-sm text-editor-text-dim">Ask me to create any type of application and I'll help you build it step by step.</p>
               </div>
             )}
             
@@ -287,14 +287,14 @@ export default function IDE() {
                 <div className={`max-w-[80%] ${message.role === 'user' ? 'order-1' : ''}`}>
                   <div className={`rounded-lg p-3 ${
                     message.role === 'user' 
-                      ? 'bg-blue-600 text-white ml-auto' 
-                      : 'bg-gray-100 text-gray-900'
+                      ? 'bg-editor-primary text-white ml-auto' 
+                      : 'bg-editor-bg text-editor-text border border-editor-border'
                   }`}>
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   </div>
                 </div>
                 {message.role === 'user' && (
-                  <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-editor-text-dim flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-xs font-medium">U</span>
                   </div>
                 )}
@@ -306,35 +306,35 @@ export default function IDE() {
                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
                   <Bot className="h-4 w-4 text-white" />
                 </div>
-                <div className="bg-gray-100 rounded-lg p-3">
+                <div className="bg-editor-bg border border-editor-border rounded-lg p-3">
                   <div className="flex items-center gap-2">
-                    <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                    <span className="text-sm text-gray-600">Thinking...</span>
+                    <div className="animate-spin h-4 w-4 border-2 border-editor-primary border-t-transparent rounded-full"></div>
+                    <span className="text-sm text-editor-text-dim">Thinking...</span>
                   </div>
                 </div>
               </div>
             )}
           </div>
           
-          <div className="p-4 border-t border-editor-border bg-gray-50">
+          <div className="p-4 border-t border-editor-border bg-editor-bg">
             <form id="ai-form" onSubmit={handleAISubmit} className="flex gap-2">
               <input
                 type="text"
                 value={aiInput}
                 onChange={(e) => setAIInput(e.target.value)}
                 placeholder="Ask me to create an application..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 bg-editor-surface border border-editor-border rounded-md text-editor-text placeholder:text-editor-text-dim focus:outline-none focus:ring-2 focus:ring-editor-primary"
                 disabled={isAILoading}
               />
               <button
                 type="submit"
                 disabled={!aiInput.trim() || isAILoading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-editor-primary text-white rounded-md hover:bg-editor-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="h-4 w-4" />
               </button>
             </form>
-            <p className="text-xs text-gray-500 mt-2">Ask me to create any type of application</p>
+            <p className="text-xs text-editor-text-dim mt-2">Ask me to create any type of application</p>
           </div>
         </div>
       </div>
