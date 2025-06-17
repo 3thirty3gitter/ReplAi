@@ -345,10 +345,21 @@ export default function IDE() {
                           currentInput.toLowerCase().includes('create') || 
                           currentInput.toLowerCase().includes('make') ||
                           currentInput.toLowerCase().includes('app') ||
+                          currentInput.toLowerCase().includes('application') ||
                           currentInput.toLowerCase().includes('website') ||
+                          currentInput.toLowerCase().includes('platform') ||
+                          currentInput.toLowerCase().includes('system') ||
                           currentInput.toLowerCase().includes('store') ||
+                          currentInput.toLowerCase().includes('shop') ||
+                          currentInput.toLowerCase().includes('ecommerce') ||
+                          currentInput.toLowerCase().includes('blog') ||
+                          currentInput.toLowerCase().includes('dashboard') ||
                           currentInput.toLowerCase().includes('todo') ||
-                          currentInput.toLowerCase().includes('task');
+                          currentInput.toLowerCase().includes('task') ||
+                          currentInput.toLowerCase().includes('social') ||
+                          currentInput.toLowerCase().includes('portfolio') ||
+                          currentInput.toLowerCase().includes('cms') ||
+                          currentInput.toLowerCase().includes('saas');
 
       if (isAppRequest) {
         // Get AI analysis and then generate plan

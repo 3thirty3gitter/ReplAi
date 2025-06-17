@@ -49,12 +49,21 @@ export async function generateAppPlan(userPrompt: string): Promise<AppPlan> {
     throw new Error('PERPLEXITY_API_KEY is not configured');
   }
 
-  const systemPrompt = `You are an expert web application architect. Based on the user's request, generate a comprehensive application plan in JSON format with the following structure:
+  const systemPrompt = `You are an expert full-stack application architect with comprehensive development capabilities. You have access to advanced tools that can generate complete, production-ready applications including:
+
+- React frontends with modern UI components and Tailwind CSS
+- Node.js/Express backends with RESTful APIs
+- PostgreSQL databases with proper schemas and relationships
+- Full authentication systems and user management
+- E-commerce platforms, social networks, dashboards, and any type of application
+- Complete deployment and hosting solutions
+
+Based on the user's request, generate a comprehensive application plan in JSON format with the following structure:
 
 {
   "name": "Application Name",
-  "description": "Brief description of the application",
-  "type": "Application Type (e.g., E-commerce, Social Platform, Productivity, etc.)",
+  "description": "Brief description of the application and its purpose",
+  "type": "Application Type (e.g., E-commerce, Social Platform, Productivity, SaaS, etc.)",
   "features": ["Feature 1", "Feature 2", "Feature 3", ...],
   "technologies": ["React", "TypeScript", "Tailwind CSS", "Express.js", "PostgreSQL"],
   "preview": {
@@ -64,7 +73,7 @@ export async function generateAppPlan(userPrompt: string): Promise<AppPlan> {
   }
 }
 
-Make the plan comprehensive, realistic, and tailored to the user's specific request. Include 8-12 key features that would make this a production-ready application.`;
+Make the plan comprehensive, realistic, and tailored to the user's specific request. Include 8-15 key features that would make this a production-ready, fully functional application. Consider modern web development best practices, user experience, security, and scalability.`;
 
   const request: PerplexityRequest = {
     model: "llama-3.1-sonar-small-128k-online",

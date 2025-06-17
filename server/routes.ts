@@ -298,10 +298,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Build context-aware prompt for Perplexity
-      let contextPrompt = `You are an expert software development assistant. Respond helpfully and conversationally to the user's message: "${message}"`;
+      let contextPrompt = `You are an expert full-stack software development assistant with comprehensive application building capabilities. You have access to advanced tools that can:
+
+- Generate complete React applications with modern UI components
+- Create database schemas and API endpoints
+- Build full-stack applications (frontend + backend + database)
+- Generate working code for any type of application (e-commerce, social platforms, dashboards, etc.)
+- Create production-ready applications with proper architecture
+
+When users ask to create, build, or develop applications, you can help them build complete, functional applications from start to finish.
+
+User's message: "${message}"`;
       
       if (code && language) {
-        contextPrompt += `\n\nThe user is working with ${language} code:\n\`\`\`${language}\n${code}\n\`\`\`\n\nProvide relevant assistance based on their code and message.`;
+        contextPrompt += `\n\nThe user is working with ${language} code:\n\`\`\`${language}\n${code}\n\`\`\`\n\nProvide relevant assistance based on their code and message. You can suggest improvements, help debug, or even generate enhanced versions of their code.`;
       }
 
       const perplexityRequest = {
@@ -309,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messages: [
           {
             role: "system" as const,
-            content: "You are a helpful software development assistant. Provide clear, concise, and actionable responses to help users with their development tasks."
+            content: "You are a senior full-stack software engineer and development assistant. You have comprehensive capabilities to build complete applications including React frontends, Node.js/Express backends, PostgreSQL databases, and modern UI frameworks. You can generate production-ready code and provide expert guidance on software architecture, best practices, and implementation strategies. When users want to create applications, you can help them build fully functional, deployable solutions."
           },
           {
             role: "user" as const,
