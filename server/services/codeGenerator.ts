@@ -1760,7 +1760,7 @@ async function generateSocialPlatform(prompt: string, projectId: number): Promis
     {
       name: 'index.html',
       path: '/client/index.html',
-      content: generateSocialPlatformHTML(platformName),
+      content: generateSocialPlatformApp(platformName),
       language: 'html',
       description: 'HTML entry point with social platform styling'
     }
@@ -1793,11 +1793,11 @@ async function generateEcommercePlatform(prompt: string, projectId: number): Pro
       description: 'E-commerce API endpoints'
     },
     {
-      name: 'index.html',
-      path: '/client/index.html',
-      content: generateEcommerceHTML(storeName),
-      language: 'html',
-      description: 'E-commerce platform entry point'
+      name: 'App.tsx',
+      path: '/client/src/App.tsx',
+      content: generateEcommerceApp(storeName),
+      language: 'typescript',
+      description: 'E-commerce React application'
     }
   ];
 }

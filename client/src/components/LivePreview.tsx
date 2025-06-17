@@ -45,47 +45,118 @@ export function LivePreview({
     if (generatedFiles && Array.isArray(generatedFiles) && generatedFiles.length > 0) {
       console.log('Generated files for preview:', generatedFiles);
       
-      // Look for HTML content in any file
-      let htmlFile = generatedFiles.find(f => f.language === 'html' || f.name.endsWith('.html'));
+      // Look for React App component
+      let appFile = generatedFiles.find(f => 
+        f.name === 'App.tsx' || 
+        f.name === 'App.jsx' || 
+        f.path?.includes('App.tsx') ||
+        (f.content && f.content.includes('function App') && f.content.includes('export default App'))
+      );
       
-      // If no HTML file, check if any file contains HTML content (common for single-file apps)
-      if (!htmlFile) {
-        htmlFile = generatedFiles.find(f => 
-          f && f.content && (
+      if (appFile) {
+        // Create a complete HTML page with the React app
+        const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated App Preview</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }
+        * { box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        ${appFile.content.replace('export default App', '').replace('export default function App', 'function App')}
+        
+        function AppWrapper() {
+          return React.createElement(App);
+        }
+        
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(AppWrapper));
+    </script>
+</body>
+</html>`;
+        
+        console.log('Generated React preview HTML');
+        setPreviewContent(htmlContent);
+        setIsPreviewReady(true);
+      } else {
+        // Fallback: look for any HTML content
+        let htmlFile = generatedFiles.find(f => 
+          f.language === 'html' || 
+          f.name.endsWith('.html') ||
+          (f.content && (
             f.content.includes('<!DOCTYPE html') || 
             f.content.includes('<html') ||
             f.content.includes('<body')
-          )
+          ))
         );
-      }
-      
-      const cssFile = generatedFiles.find(f => f.language === 'css' || f.name.endsWith('.css'));
-      const jsFile = generatedFiles.find(f => (f.language === 'javascript' || f.name.endsWith('.js')) && f !== htmlFile);
-
-      if (htmlFile) {
-        let content = htmlFile.content;
         
-        // Inject CSS if available and not already included
-        if (cssFile && !content.includes(cssFile.content)) {
-          content = content.replace(
-            '</head>', 
-            `<style>${cssFile.content}</style></head>`
-          );
+        if (htmlFile) {
+          console.log('Found HTML file for preview');
+          setPreviewContent(htmlFile.content);
+          setIsPreviewReady(true);
+        } else {
+          // Create a simple preview showing the generated structure
+          const filesList = generatedFiles.map(f => `• ${f.name} (${f.language})`).join('\n');
+          const placeholderHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Generated</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">Application Successfully Generated!</h1>
+                <p class="text-gray-600">Your full-stack application has been created with the following files:</p>
+            </div>
+            
+            <div class="bg-gray-50 rounded-lg p-6">
+                <h3 class="font-semibold text-gray-900 mb-3">Generated Files:</h3>
+                <div class="space-y-2 font-mono text-sm">
+                    ${generatedFiles.map(f => `
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                            <span class="text-gray-700">${f.name}</span>
+                            <span class="text-gray-500">(${f.language})</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    Switch to the <strong>Code</strong> tab to view and edit your generated files.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+          
+          console.log('Created placeholder preview for generated files');
+          setPreviewContent(placeholderHTML);
+          setIsPreviewReady(true);
         }
-        
-        // Inject JavaScript if available and not already included
-        if (jsFile && !content.includes(jsFile.content)) {
-          content = content.replace(
-            '</body>', 
-            `<script>${jsFile.content}</script></body>`
-          );
-        }
-        
-        console.log('Setting preview content:', content.substring(0, 200) + '...');
-        setPreviewContent(content);
-        setIsPreviewReady(true);
-      } else {
-        console.log('No HTML content found in generated files');
       }
     }
   }, [generatedFiles]);
