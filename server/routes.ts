@@ -54,10 +54,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           case 'ai_message':
             const aiResponse = await getCodeAssistance({
+              message: message.prompt,
               code: message.code || '',
               language: message.language || 'javascript',
-              prompt: message.prompt,
-              context: message.context
+              projectId: message.projectId
             });
 
             // Update AI conversation
@@ -72,7 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             messages.push({
               role: 'assistant',
-              content: aiResponse.suggestion + '\n\n' + aiResponse.explanation,
+              content: aiResponse.message,
               timestamp: Date.now()
             });
 
@@ -308,39 +308,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         plan: response.plan,
         confidence: response.confidence
       });
-        messages: [
-          {
-            role: "system" as const,
-            content: "You are a senior full-stack software engineer and development assistant. You have comprehensive capabilities to build complete applications including React frontends, Node.js/Express backends, PostgreSQL databases, and modern UI frameworks. You can generate production-ready code and provide expert guidance on software architecture, best practices, and implementation strategies. When users want to create applications, you can help them build fully functional, deployable solutions."
-          },
-          {
-            role: "user" as const,
-            content: contextPrompt
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.2,
-        top_p: 0.9,
-        stream: false
-      };
-
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(perplexityRequest)
-      });
-
-      if (!response.ok) {
-        throw new Error(`Perplexity API error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const aiMessage = data.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
-
-      res.json({ message: aiMessage });
     } catch (error) {
       console.error('Perplexity chat error:', error);
       res.status(500).json({ 
