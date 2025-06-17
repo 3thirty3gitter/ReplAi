@@ -49,16 +49,7 @@ export async function generateAppPlan(userPrompt: string): Promise<AppPlan> {
     throw new Error('PERPLEXITY_API_KEY is not configured');
   }
 
-  const systemPrompt = `You are an expert full-stack application architect with comprehensive development capabilities. You have access to advanced tools that can generate complete, production-ready applications including:
-
-- React frontends with modern UI components and Tailwind CSS
-- Node.js/Express backends with RESTful APIs
-- PostgreSQL databases with proper schemas and relationships
-- Full authentication systems and user management
-- E-commerce platforms, social networks, dashboards, and any type of application
-- Complete deployment and hosting solutions
-
-Based on the user's request, generate a comprehensive application plan in JSON format with the following structure:
+  const systemPrompt = `You are an expert full-stack application architect. Based on the user's request, generate a comprehensive application plan in JSON format with the following structure:
 
 {
   "name": "Application Name",
@@ -125,127 +116,12 @@ Make the plan comprehensive, realistic, and tailored to the user's specific requ
 
       return plan;
     } catch (parseError) {
-      // If JSON parsing fails, create a fallback plan based on the user's request
-      return createFallbackPlan(userPrompt);
+      console.error('Failed to parse JSON from Perplexity:', parseError);
+      console.log('Raw content:', content);
+      throw new Error('Perplexity returned invalid JSON format');
     }
   } catch (error) {
     console.error('Perplexity API error:', error);
-    // Return a fallback plan if the API fails
-    return createFallbackPlan(userPrompt);
+    throw error;
   }
-}
-
-function createFallbackPlan(userPrompt: string): AppPlan {
-  const lowerPrompt = userPrompt.toLowerCase();
-  
-  if (lowerPrompt.includes('surfboard') || lowerPrompt.includes('surf')) {
-    return {
-      name: "SurfBoard Store",
-      description: "A professional e-commerce website for selling surfboards with modern design and full shopping functionality",
-      type: "E-commerce",
-      features: [
-        "Product catalog with surfboard listings",
-        "Individual product detail pages",
-        "Shopping cart functionality",
-        "Secure checkout process",
-        "Product search and filtering",
-        "Category browsing (longboards, shortboards, funboards)",
-        "Product image galleries",
-        "Inventory management",
-        "Customer reviews and ratings",
-        "Responsive mobile design",
-        "User account management",
-        "Order tracking system"
-      ],
-      technologies: ["React", "TypeScript", "Tailwind CSS", "Express.js", "PostgreSQL"],
-      preview: {
-        title: "Wave Rider Surfboards",
-        description: "Ride the Wave - Premium surfboards crafted for every skill level. From beginners to pros, find your perfect board.",
-        sections: ["Hero Section", "Featured Products", "Shop by Category", "About Us", "Customer Reviews", "Contact"]
-      }
-    };
-  }
-  
-  if (lowerPrompt.includes('todo') || lowerPrompt.includes('task')) {
-    return {
-      name: "Task Manager Pro",
-      description: "A comprehensive task management application with project organization and team collaboration features",
-      type: "Productivity",
-      features: [
-        "Create and manage tasks",
-        "Project organization",
-        "Priority levels and due dates",
-        "Progress tracking",
-        "Categories and tags",
-        "Search and filtering",
-        "Task completion analytics",
-        "Team collaboration",
-        "File attachments",
-        "Notifications and reminders",
-        "Calendar integration",
-        "Export functionality"
-      ],
-      technologies: ["React", "TypeScript", "Tailwind CSS", "Express.js", "PostgreSQL"],
-      preview: {
-        title: "TaskFlow",
-        description: "Organize your work and life with powerful task management",
-        sections: ["Dashboard", "Task Lists", "Projects", "Analytics", "Team", "Calendar"]
-      }
-    };
-  }
-  
-  if (lowerPrompt.includes('blog') || lowerPrompt.includes('content')) {
-    return {
-      name: "Blog Platform",
-      description: "A modern content management system for creating and managing blog posts with rich editing capabilities",
-      type: "Content Management",
-      features: [
-        "Rich text editor",
-        "Post creation and editing",
-        "Category management",
-        "Tag system",
-        "Comment system",
-        "User authentication",
-        "Search functionality",
-        "SEO optimization",
-        "Image upload and management",
-        "Draft and publish workflow",
-        "Analytics dashboard",
-        "Responsive design"
-      ],
-      technologies: ["React", "TypeScript", "Tailwind CSS", "Express.js", "PostgreSQL"],
-      preview: {
-        title: "ContentHub",
-        description: "Share your stories with the world through beautiful, engaging blog posts",
-        sections: ["Latest Posts", "Categories", "About", "Contact", "Archive"]
-      }
-    };
-  }
-  
-  // Generic application plan
-  return {
-    name: "Custom Web Application",
-    description: "A modern web application tailored to your specific requirements with full-stack functionality",
-    type: "Web Application",
-    features: [
-      "Responsive design",
-      "Modern UI components",
-      "User authentication",
-      "Database integration",
-      "API endpoints",
-      "Search functionality",
-      "Data visualization",
-      "Real-time updates",
-      "Mobile optimization",
-      "Security features",
-      "Performance optimization",
-      "Analytics integration"
-    ],
-    technologies: ["React", "TypeScript", "Tailwind CSS", "Express.js", "PostgreSQL"],
-    preview: {
-      title: "Your Custom App",
-      description: "A comprehensive solution built with modern technologies to meet your specific needs",
-      sections: ["Dashboard", "Main Features", "Analytics", "Settings", "Support"]
-    }
-  };
 }
