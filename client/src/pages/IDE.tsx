@@ -92,7 +92,7 @@ export default function IDE() {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
-      const newWidth = window.innerWidth - e.clientX;
+      const newWidth = e.clientX;
       setAiPanelWidth(Math.max(300, Math.min(800, newWidth)));
     };
 
@@ -351,8 +351,26 @@ export default function IDE() {
                           currentInput.toLowerCase().includes('task');
 
       if (isAppRequest) {
-        // Generate plan using Perplexity API
+        // First get AI analysis of the user's request
         try {
+          const analysisResponse = await apiRequest('POST', '/api/ai/chat', {
+            message: `Analyze this request and provide a thoughtful response: "${currentInput}". Then I will generate a comprehensive plan.`,
+            code: currentCode,
+            language: currentLanguage,
+            projectId: currentProjectId
+          });
+
+          const analysisData = await analysisResponse.json();
+          
+          // Add AI analysis response
+          const analysisMessage = {
+            role: 'assistant' as const,
+            content: analysisData.message || "I understand your request. Let me analyze what you need and create a comprehensive plan.",
+            timestamp: Date.now()
+          };
+          setAIMessages(prev => [...prev, analysisMessage]);
+
+          // Then generate the plan
           const planResponse = await apiRequest('POST', '/api/ai/generate-plan', {
             prompt: currentInput
           });
@@ -360,37 +378,37 @@ export default function IDE() {
           const planData = await planResponse.json();
           
           if (planData.success && planData.plan) {
-            const aiResponse = {
+            const planMessage = {
               role: 'assistant' as const,
-              content: `I'll help you create ${planData.plan.description}. Let me analyze your requirements and develop a comprehensive plan for your ${planData.plan.type.toLowerCase()}.`,
+              content: `Based on your requirements, I've created a detailed plan. Here's what I propose to build:`,
               timestamp: Date.now(),
               plan: planData.plan,
               isWaitingForApproval: true
             };
-            setAIMessages(prev => [...prev, aiResponse]);
+            setAIMessages(prev => [...prev, planMessage]);
           } else {
             // Fallback to local plan generation if API fails
             const plan = generateAppPlan(currentInput);
-            const aiResponse = {
+            const planMessage = {
               role: 'assistant' as const,
-              content: `I'll help you create ${plan.description}. Let me analyze your requirements and develop a comprehensive plan for your ${plan.type.toLowerCase()}.`,
+              content: `Based on your requirements, I've created a detailed plan. Here's what I propose to build:`,
               timestamp: Date.now(),
               plan: plan,
               isWaitingForApproval: true
             };
-            setAIMessages(prev => [...prev, aiResponse]);
+            setAIMessages(prev => [...prev, planMessage]);
           }
         } catch (error) {
           // Fallback to local plan generation if API fails
           const plan = generateAppPlan(currentInput);
-          const aiResponse = {
+          const planMessage = {
             role: 'assistant' as const,
-            content: `I'll help you create ${plan.description}. Let me analyze your requirements and develop a comprehensive plan for your ${plan.type.toLowerCase()}.`,
+            content: `I understand you want to create an application. Based on your request, here's what I propose to build:`,
             timestamp: Date.now(),
             plan: plan,
             isWaitingForApproval: true
           };
-          setAIMessages(prev => [...prev, aiResponse]);
+          setAIMessages(prev => [...prev, planMessage]);
         }
       } else {
         // Regular chat response
@@ -513,11 +531,14 @@ export default function IDE() {
       >
         {/* Resize Handle */}
         <div
-          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-editor-primary/20 transition-colors z-10 ${
+          className={`absolute top-0 right-0 w-2 h-full cursor-col-resize bg-transparent hover:bg-editor-primary/20 transition-colors z-10 ${
             isResizing ? 'bg-editor-primary/30' : ''
           }`}
           onMouseDown={handleMouseDown}
         />
+        
+        {/* Resize Visual Indicator */}
+        <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-1 h-8 bg-editor-border rounded-l opacity-50" />
         {/* AI Assistant Header */}
         <div className="h-12 bg-editor-surface border-b border-editor-border flex items-center px-4 justify-between">
           <div className="flex items-center space-x-2">
