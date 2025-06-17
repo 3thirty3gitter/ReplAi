@@ -559,36 +559,40 @@ export default function IDE() {
                 ) : (
                   <div className="space-y-1 p-2">
                     {chatHistories.map((chat) => (
-                      <button
+                      <div
                         key={chat.id}
-                        onClick={() => loadChat(chat.id)}
-                        className={`w-full text-left p-3 rounded-md text-sm hover:bg-editor-surface transition-colors group ${
+                        className={`w-full rounded-md text-sm transition-colors group relative ${
                           currentChatId === chat.id ? 'bg-editor-surface border border-editor-border' : ''
                         }`}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-editor-text font-medium truncate">
-                              {chat.title}
-                            </p>
-                            <p className="text-xs text-editor-text-dim">
-                              {new Date(chat.timestamp).toLocaleDateString()}
-                            </p>
-                            <p className="text-xs text-editor-text-dim">
-                              {chat.messages.length} messages
-                            </p>
+                        <div
+                          onClick={() => loadChat(chat.id)}
+                          className="w-full text-left p-3 hover:bg-editor-surface cursor-pointer"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-editor-text font-medium truncate">
+                                {chat.title}
+                              </p>
+                              <p className="text-xs text-editor-text-dim">
+                                {new Date(chat.timestamp).toLocaleDateString()}
+                              </p>
+                              <p className="text-xs text-editor-text-dim">
+                                {chat.messages.length} messages
+                              </p>
+                            </div>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteChat(chat.id);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 rounded text-red-500 hover:text-red-700 transition-opacity"
-                          >
-                            <ChevronRight className="h-3 w-3" />
-                          </button>
                         </div>
-                      </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteChat(chat.id);
+                          }}
+                          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 rounded text-red-500 hover:text-red-700 transition-opacity"
+                        >
+                          <ChevronRight className="h-3 w-3" />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 )}
