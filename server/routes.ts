@@ -290,32 +290,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projectId: z.number()
       }).parse(req.body);
 
-      if (!process.env.PERPLEXITY_API_KEY) {
-        return res.status(500).json({
-          success: false,
-          message: "Perplexity API key not configured"
-        });
-      }
-
-      // Build context-aware prompt for Perplexity
-      let contextPrompt = `You are an expert full-stack software development assistant with comprehensive application building capabilities. You have access to advanced tools that can:
-
-- Generate complete React applications with modern UI components
-- Create database schemas and API endpoints
-- Build full-stack applications (frontend + backend + database)
-- Generate working code for any type of application (e-commerce, social platforms, dashboards, etc.)
-- Create production-ready applications with proper architecture
-
-When users ask to create, build, or develop applications, you can help them build complete, functional applications from start to finish.
-
-User's message: "${message}"`;
+      // Use enhanced Replit-style AI agent with context gathering
+      const { getCodeAssistance } = await import('./services/perplexity');
       
-      if (code && language) {
-        contextPrompt += `\n\nThe user is working with ${language} code:\n\`\`\`${language}\n${code}\n\`\`\`\n\nProvide relevant assistance based on their code and message. You can suggest improvements, help debug, or even generate enhanced versions of their code.`;
-      }
+      const assistanceRequest = {
+        message,
+        projectId,
+        code,
+        language
+      };
 
-      const perplexityRequest = {
-        model: "llama-3.1-sonar-small-128k-online",
+      const response = await getCodeAssistance(assistanceRequest);
+
+      res.json({
+        success: true,
+        message: response.message,
+        plan: response.plan,
+        confidence: response.confidence
+      });
         messages: [
           {
             role: "system" as const,
