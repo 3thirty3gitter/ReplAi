@@ -3,6 +3,7 @@ import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
+import { registerCodeRoutes } from './routes/codeRoutes';
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use((req, res, next) => {
 (async () => {
   // This should return your HTTP server instance (e.g. via http.createServer(app))
   const server = await registerRoutes(app);
+  registerCodeRoutes(app);
 
   // Global error handler
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
