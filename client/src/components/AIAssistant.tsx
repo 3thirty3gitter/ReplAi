@@ -285,6 +285,10 @@ export function AIAssistant({
           )}
           
           {messages.map((message, index) => (
+    // ?? Preview rendering
+    if (message.type === "preview" && message.image) {
+      return <img src={message.image} alt="UI Preview" />;
+    }
             <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               {message.role === 'assistant' && (
                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">

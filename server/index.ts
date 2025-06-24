@@ -2,6 +2,9 @@ import "dotenv/config";
 // server/index.ts
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { registerPreviewRoute } from './routes/previewRoutes';
+import { migrateDatabase } from './services/dbService';
+import { commitToGitHub } from './services/githubService';
 import { setupVite, serveStatic } from "./vite";
 import { registerCodeRoutes } from './routes/codeRoutes';
 
@@ -54,6 +57,10 @@ app.use((req, res, next) => {
 (async () => {
   // This should return your HTTP server instance (e.g. via http.createServer(app))
   const server = await registerRoutes(app);
+  // After core routes…
+  registerCodeRoutes(app);
+  registerPreviewRoute(app);
+  // await migrateDatabase();  // disabled to avoid auth errors
   registerCodeRoutes(app);
 
   // Global error handler
